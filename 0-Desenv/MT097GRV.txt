@@ -1,0 +1,30 @@
+/*/{Protheus.doc} User Function MT097GRV
+    (Permite ou não a gravação de nova alçada de compras)
+    @type  Function
+    @author LEandro Lemos
+    @since 14/05/2024
+    @version P12
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    /*/
+User Function MT097GRV()
+    Local lGravaAlcada := .T. as logical
+    Local cPedCom := PARAMIXB[4] as character
+
+    DbSelectArea("SCR")
+    SCR->(dbSetOrder(3))
+
+    if SCR->(DbSeek(xFilial("SCR") + 'PC' + cPedCom))
+        While SCR->(!EOF() .and. CR_NUM == cPedCom)
+            // CR_STATUS  01=Aguardando nivel anterior;02=Pendente;03=Liberado;04=Bloqueado;05=Liberado outro usuario;06=Rejeitado
+            IF SCR->CR_STATUS $ "03,05" .and. SCR->CR_TOTAL >= n120TOTLIB
+                lGravaAlcada     := .F.
+            EndIF
+            SCR->(DBSkip())
+        EndDo
+    endif
+
+return lGravaAlcada
