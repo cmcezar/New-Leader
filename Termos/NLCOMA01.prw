@@ -55,20 +55,22 @@ User Function DelZZ1()
 Local cAliasSC7 := GetNextAlias()
 Local lRet := .T.
 
-BeginSQL Alias cAliasSC7
+If !Inclui .And. !Altera        // Exclusão
+    BeginSQL Alias cAliasSC7
 
-    SELECT TOP 1 C7_NUM FROM %Table:SC7% SC7 WHERE SC7.%notdel% AND C7_XTERMO = %Exp:ZZ1->ZZ1_CODIGO%
+        SELECT TOP 1 C7_NUM FROM %Table:SC7% SC7 WHERE SC7.%notdel% AND C7_XTERMO = %Exp:ZZ1->ZZ1_CODIGO%
 
-EndSQL
+    EndSQL
 
-(cAliasSC7)->(DbGoTop())
+    (cAliasSC7)->(DbGoTop())
 
-If !(cAliasSC7)->(EOF())
-    Alert('Este código foi utilizado em um ou mais pedidos de compra e não poderá ser excluído.')
-    lRet := .F.
+    If !(cAliasSC7)->(EOF())
+        Alert('Este código foi utilizado em um ou mais pedidos de compra e não poderá ser excluído.')
+        lRet := .F.
+    Endif 
+
+    (cAliasSC7)->(DbCloseArea())
 Endif 
-
-(cAliasSC7)->(DbCloseArea())
 
 Return lRet 
 
