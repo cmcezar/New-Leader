@@ -44,10 +44,16 @@ Return
  *--------------------------------------------------------------------------------------------------------------*/
    
 User Function MTA120G2()
-    Local aArea := GetArea()
-  
-    //Atualiza a descrição, com a variável pública criada no ponto de entrada MT120TEL
+
+Local aArea := GetArea()
+
+//Atualiza o termo com a variável pública criada no ponto de entrada MT120TEL
+If FunName() = 'PCEXCEL'
+    SC7->C7_XTERMO := GetMV('NL_XTERMO')
+Else 
     SC7->C7_XTERMO := cXTermo
-  
-    RestArea(aArea)
+Endif 
+
+RestArea(aArea)
+
 Return

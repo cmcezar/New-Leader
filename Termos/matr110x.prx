@@ -33,6 +33,7 @@ Private lAuto 	 := (nReg!=Nil)
 Private cFilSA2	 := xFilial("SA2")
 Private cFilSA5	 := xFilial("SA5")
 Private cFilSAJ	 := xFilial("SAJ")
+
 Private cFilSB1	 := xFilial("SB1")
 Private cFilSB5	 := xFilial("SB5")
 Private cFilSC7	 := xFilial("SC7")
@@ -41,6 +42,10 @@ Private cFilSE4	 := xFilial("SE4")
 Private cFilSM4	 := xFilial("SM4")
 Private xUsrName := Nil 
 Private	oHash 	 := Nil 
+
+cAlias := Alias()
+nReg   := recno()
+lAuto  := .T.
 
 //Carrega os usuários do sistema para ser utilizado posteriormente nas demais funções através do HashMap
 oHash := U_R110XHAS()
