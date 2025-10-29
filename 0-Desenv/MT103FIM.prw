@@ -69,7 +69,7 @@ If Inclui
             If lMsErroAuto
                 MostraErro()
             Else
-                MsgAlert('Processamento Ok!')
+                MsgInfo('Produtos endereçados !', 'Sucesso')
             Endif
 
         Endif 
