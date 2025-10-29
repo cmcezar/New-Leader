@@ -1212,15 +1212,18 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == cFilSC7 .And
 				// Varre todas as linhas do texto
 				For nI := 1 to Len(aTermo)
 
-					nNumLin := Ceiling(Len(aTermo[nI]) / 180)
+//					nNumLin := Ceiling(Len(aTermo[nI]) / 180)
+					nNumLin := Ceiling(Len(aTermo[nI]) / 150)
 
 					If nNumLin > 1
 						nJ := 0
 						nPosIni := 1
 						For nJ := 1 to nNumLin
-							oReport:PrintText(Substr(aTermo[nI],nPosIni,180),,050 ) 
+//							oReport:PrintText(Substr(aTermo[nI],nPosIni,180),,050 ) 
+							oReport:PrintText(Substr(aTermo[nI],nPosIni,150),,050 ) 
 							oReport:SkipLine()
-							nPosIni += 180
+//							nPosIni += 180
+							nPosIni += 150
 						Next nJ
 
 					Else 
