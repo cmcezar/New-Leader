@@ -180,62 +180,71 @@ If lRet
 					cCounter :=	StrZero(0,TamSx3('DB_ITEM')[1])     // Numero do Item do Movimento
 					nSaldoB2 := 0
 
-					// Verifica se existe saldo do produto
-					If SB2->(DbSeek(xFilial('SB2') + aDados[nx,nz,1] + aDados[nx,nz,2])) .And. SB2->B2_QATU > 0
-						
-						nSaldoB2 := SB2->B2_QATU
-
-						// Localiza produto SB1
-						
+					// Localiza produto SB1
+					If !Empty(aDados[nx,nz,1])
 						SB1->(DbSetOrder(1))
 						SB1->(DbSeek(xFilial('SB1') + aDados[nx,nz,1]))	
+						SB1->(reclock('SB1',.F.))
+						SB1->B1_LOCALIZ := 'S'
+						SB1->(MsUnlock())
+					Endif 
 
-						// Inclui o endereço na SBE
-						SBE->(DbSetOrder(1))
-						If !SBE->(DbSeek(xFilial('SBE') + aDados[nx,nz,2] + aDados[nx,nz,3]))	
-							SBE->(reclock('SBE',.T.))
-							SBE->BE_FILIAL  := xFilial('SBE')
-							SBE->BE_LOCAL   := aDados[nx,nz,2]
-							SBE->BE_LOCALIZ := aDados[nx,nz,3]
-							SBE->(MsUnlock())
+					// Inclui o endereço na SBE
+					SBE->(DbSetOrder(1))
+					If !SBE->(DbSeek(xFilial('SBE') + aDados[nx,nz,2] + aDados[nx,nz,3]))	
+						SBE->(reclock('SBE',.T.))
+						SBE->BE_FILIAL  := xFilial('SBE')
+						SBE->BE_LOCAL   := aDados[nx,nz,2]
+						SBE->BE_LOCALIZ := aDados[nx,nz,3]
+						SBE->(MsUnlock())
+					Endif 
+
+					// Verifica se existe saldo do produto
+					If !Empty(aDados[nx,nz,1])
+
+						SB2->(DbSetOrder(1))
+						If SB2->(DbSeek(xFilial('SB2') + aDados[nx,nz,1] + aDados[nx,nz,2])) .And. SB2->B2_QATU > 0
+							
+							nSaldoB2 := SB2->B2_QATU
+
+							// Inclui movimento da SDB
+							cCounter := Soma1(cCounter)
+
+							CriaSDB(aDados[nx,nz,1],;	// Produto
+									aDados[nx,nz,2],;	// Armazem
+									nSaldoB2,;	        // Quantidade
+									aDados[nx,nz,3],;	// Localizacao
+									'',;	            // Numero de Serie
+									'SLDINI',;		    // Doc
+									'',;		        // Serie
+									'',;			    // Cliente / Fornecedor
+									'',;			    // Loja
+									'',;			    // Tipo NF
+									'ACE',;			    // Origem do Movimento
+									dDataBase,;		    // Data
+									'',;	    		// Lote
+									'',; 				// Sub-Lote
+									cNumSeq,;		    // Numero Sequencial
+									'499',;			    // Tipo do Movimento
+									'M',;			    // Tipo do Movimento (Distribuicao/Movimento)
+									cCounter,;		    // Item
+									.F.,;			    // Flag que indica se e' mov. estorno
+									0,;				    // Quantidade empenhado
+									0 )		            // Quantidade segunda UM
+
+							// Soma saldo em estoque por localizacao fisica (SBF)
+
+							GravaSBF("SDB")
+
+							nRegProc += 1
+
+							MatADDLog(aLogs,'Saldo distribuido'+" -> "+aDados[nx,nz,1],6,aDados[nx,nz,1],aDados[nx,nz,2],nx,nz) // "Saldo distribuido"
+
+						Else
+							// Adiciona registro em array para Log        
+							MatADDLog(aLogs,'Produto sem saldo em estoque'+" -> "+aDados[nx,nz,1],6,aDados[nx,nz,1],aDados[nx,nz,2],nx,nz) // "Produto sem saldo em estoque"
 						Endif 
 
-						// Inclui movimento da SDB
-						cCounter := Soma1(cCounter)
-
-						CriaSDB(aDados[nx,nz,1],;	// Produto
-								aDados[nx,nz,2],;	// Armazem
-								nSaldoB2,;	        // Quantidade
-								aDados[nx,nz,3],;	// Localizacao
-								'',;	            // Numero de Serie
-								'SLDINI',;		    // Doc
-								'',;		        // Serie
-								'',;			    // Cliente / Fornecedor
-								'',;			    // Loja
-								'',;			    // Tipo NF
-								'ACE',;			    // Origem do Movimento
-								dDataBase,;		    // Data
-								'',;	    		// Lote
-								'',; 				// Sub-Lote
-								cNumSeq,;		    // Numero Sequencial
-								'499',;			    // Tipo do Movimento
-								'M',;			    // Tipo do Movimento (Distribuicao/Movimento)
-								cCounter,;		    // Item
-								.F.,;			    // Flag que indica se e' mov. estorno
-								0,;				    // Quantidade empenhado
-								0 )		            // Quantidade segunda UM
-
-						// Soma saldo em estoque por localizacao fisica (SBF)
-
-						GravaSBF("SDB")
-
-						nRegProc += 1
-
-						MatADDLog(aLogs,'Saldo distribuido'+" -> "+aDados[nx,nz,1],6,aDados[nx,nz,1],aDados[nx,nz,2],nx,nz) // "Saldo distribuido"
-
-					Else
-						// Adiciona registro em array para Log        
-						MatADDLog(aLogs,'Produto sem saldo em estoque'+" -> "+aDados[nx,nz,1],6,aDados[nx,nz,1],aDados[nx,nz,2],nx,nz) // "Produto sem saldo em estoque"
 					Endif 
 
 				Endif 
