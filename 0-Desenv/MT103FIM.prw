@@ -14,6 +14,9 @@
 //------------------------------------------------------------\\
 User Function MT103FIM()
 
+Local nOpcao    := PARAMIXB[1]   // Opção Escolhida pelo usuario no aRotina 
+Local nConfirma := PARAMIXB[2]   // Se o usuario confirmou a operação de gravação da NFECODIGO DE APLICAÇÃO DO USUARIO
+
 Local aCabSDA := {}
 Local aItem   := {}
 Local aItens  := {}
@@ -28,7 +31,7 @@ Private cLoja   := SD1->D1_LOJA
 
 Private lMsErroAuto := .F.
 
-If Inclui
+If Inclui .And. nConfirma = 1
 
     // Endereça os produtos que já possuem saldo em um endereço
 
@@ -48,10 +51,13 @@ If Inclui
 
     While !(cAliasSDA)->(EOF())
 
-        SBF->(DbSetOrder(2))    // Filial+Produto+Local
-        If SBF->(DbSeek(xFilial('SBF') + (cAliasSDA)->DA_PRODUTO + (cAliasSDA)->DA_LOCAL))
+        SBE->(DbSetOrder(10))    // Filial+Produto+Local
+        If SBE->(DbSeek(xFilial('SBE') + (cAliasSDA)->DA_PRODUTO + (cAliasSDA)->DA_LOCAL))
 
-            cEnder := SBF->BF_LOCALIZ
+            cEnder := SBE->BE_LOCALIZ
+
+            /* Retorna a ordem original do índice */
+            SBE->(DbSetOrder(1))    // Filial+Endereço
 
             aItens := {}
 
@@ -62,6 +68,7 @@ If Inclui
             //Dados do item que será endereçado
             aItem := {{'DB_ITEM'   , '0001'   , Nil},;
                       {'DB_ESTORNO', ' '      , Nil},;
+                      {'DB_LOCAL'  , (cAliasSDA)->DA_LOCAL , Nil},;
                       {'DB_LOCALIZ', cEnder   , Nil},;
                       {'DB_DATA'   , dDataBase, Nil},;
                       {'DB_QUANT'  , (cAliasSDA)->DA_QTDORI, Nil}}
@@ -69,7 +76,7 @@ If Inclui
             aadd(aItens,aItem)
 
             //Executa o endere?amento do item
-            MATA265(aCabSDA, aItens, 3)
+            MATA265(aCabSDA, aItens, nOpcao)
 
             If lMsErroAuto
                 MostraErro()
@@ -152,6 +159,7 @@ TRCell():New(oSection1, 'DA_QTDORI' , cAliasSDA, 'Quantidade' , '@E 999,999',  7
 TRCell():New(oSection1, 'B1_UM'     , cAliasSDA, 'UM'         , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)          
 TRCell():New(oSection1, 'DA_LOCAL'  , cAliasSDA, 'Local'      , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)          
 TRCell():New(oSection1, 'DB_LOCALIZ', cAliasSDA, 'Endereço'   , '@!'        , 12,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)             
+TRCell():New(oSection1, 'B1_DESC'   , cAliasSDA, 'Descrição'  , '@!'        , 70,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
 
 oSection1:SetHeaderPage(.F.)
 oSection1:SetPageBreak(.F.)     
@@ -175,7 +183,7 @@ BeginSQL Alias cAliasSDA
 
 	Column DA_DATA  as Date		
 		
-	SELECT DA_DOC, DA_SERIE, DA_DATA, DA_PRODUTO, DA_QTDORI, B1_UM, DA_LOCAL, ISNULL(DB_LOCALIZ,'') AS DB_LOCALIZ
+	SELECT DA_DOC, DA_SERIE, DA_DATA, DA_PRODUTO, DA_QTDORI, B1_DESC, B1_UM, DA_LOCAL, ISNULL(DB_LOCALIZ,'') AS DB_LOCALIZ
 	FROM %Table:SDA% SDA LEFT OUTER JOIN %Table:SDB% SDB ON 
 			DB_FILIAL = %xFilial:SDB%
 		AND DB_NUMSEQ = DA_NUMSEQ

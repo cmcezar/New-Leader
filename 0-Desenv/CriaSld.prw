@@ -194,6 +194,7 @@ If lRet
 					If !SBE->(DbSeek(xFilial('SBE') + aDados[nx,nz,2] + aDados[nx,nz,3]))	
 						SBE->(reclock('SBE',.T.))
 						SBE->BE_FILIAL  := xFilial('SBE')
+						SBE->BE_CODPRO  := aDados[nx,nz,1]
 						SBE->BE_LOCAL   := aDados[nx,nz,2]
 						SBE->BE_LOCALIZ := aDados[nx,nz,3]
 						SBE->(MsUnlock())
