@@ -51,13 +51,17 @@ If Inclui .And. nConfirma = 1
 
     While !(cAliasSDA)->(EOF())
 
-        SBE->(DbSetOrder(10))    // Filial+Produto+Local
-        If SBE->(DbSeek(xFilial('SBE') + (cAliasSDA)->DA_PRODUTO + (cAliasSDA)->DA_LOCAL))
+//        SBE->(DbSetOrder(10))    // Filial+Produto+Local
+//        If SBE->(DbSeek(xFilial('SBE') + (cAliasSDA)->DA_PRODUTO + (cAliasSDA)->DA_LOCAL))
 
-            cEnder := SBE->BE_LOCALIZ
+        ZZ2->(DbSetOrder(2))    // Filial+Produto+Local
+        If ZZ2->(DbSeek(xFilial('ZZ2') + (cAliasSDA)->DA_PRODUTO + (cAliasSDA)->DA_LOCAL))
+
+//            cEnder := SBE->BE_LOCALIZ
+            cEnder := ZZ2->ZZ2_LOCALI      // Pega o primeiro endereço
 
             /* Retorna a ordem original do índice */
-            SBE->(DbSetOrder(1))    // Filial+Endereço
+//            SBE->(DbSetOrder(1))    // Filial+Endereço
 
             aItens := {}
 

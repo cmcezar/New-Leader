@@ -194,10 +194,23 @@ If lRet
 					If !SBE->(DbSeek(xFilial('SBE') + aDados[nx,nz,2] + aDados[nx,nz,3]))	
 						SBE->(reclock('SBE',.T.))
 						SBE->BE_FILIAL  := xFilial('SBE')
-						SBE->BE_CODPRO  := aDados[nx,nz,1]
+//						SBE->BE_CODPRO  := aDados[nx,nz,1]
 						SBE->BE_LOCAL   := aDados[nx,nz,2]
 						SBE->BE_LOCALIZ := aDados[nx,nz,3]
 						SBE->(MsUnlock())
+					Endif 
+
+					// Vincula Endereço x Produto
+					If !Empty(aDados[nx,nz,1])
+						ZZ2->(DbSetOrder(1))		// Armazém + Endereço + produto
+						If !ZZ2->(DbSeek(xFilial('ZZ2') + aDados[nx,nz,2] + aDados[nx,nz,3] + aDados[nx,nz,1]))	
+							ZZ2->(reclock('ZZ2',.T.))
+							ZZ2->ZZ2_FILIAL  := xFilial('ZZ2')
+							ZZ2->ZZ2_CODPRO  := aDados[nx,nz,1]
+							ZZ2->ZZ2_LOCAL   := aDados[nx,nz,2]
+							ZZ2->ZZ2_LOCALI  := aDados[nx,nz,3]
+							ZZ2->(MsUnlock())
+						Endif 
 					Endif 
 
 					// Verifica se existe saldo do produto
