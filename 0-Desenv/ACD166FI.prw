@@ -3,7 +3,7 @@
 #include 'fwmvcdef.ch'
 
 //-----------------------------------------------------\\
-/*/{Protheus.doc} ACD166FM
+/*/{Protheus.doc} ACD166FI
 // Ponto de entrada no final do processo de separação.
 @author Claudio Macedo
 @since 24/11/2025
@@ -12,8 +12,8 @@
 @type Function 
 /*/
 //-----------------------------------------------------\\
-User Function ACD166FM()
+User Function ACD166FI()
 
-CBAlert('ACD166FM','.:Aviso:.',.T.,,2)
+CBAlert('ACD166FI','.:Aviso:.',.T.,,2)
 
 Return Nil
