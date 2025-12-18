@@ -99,6 +99,7 @@ If lRet
 		AADD(aCampos,CriaVar("B1_COD"))
 		AADD(aCampos,CriaVar("B1_LOCPAD"))
 		AADD(aCampos,CriaVar("BE_LOCALIZ"))
+		AADD(aCampos,CriaVar("B2_QATU"))
 
 
 		// Sorteia dados de acordo com utilizacao na rotina
@@ -125,7 +126,7 @@ If lRet
 		// 06 PRODUTO COM ENDERECAMENTO
 				
 		// Valida os dados passados atraves do array    
-
+/*
 		For nx:=1 to Len(aDados)
 			ProcRegua(Len(aDados[nx]))
 			For nz:=1 to Len(aDados[nx])
@@ -138,6 +139,9 @@ If lRet
 				Next ny
 			Next nz
 		Next nx		
+*/
+		nx := 0
+		nz := 0
 
 		For nx:=1 to Len(aDados)
 			For nz:=1 to Len(aDados[nx])
@@ -157,6 +161,9 @@ If lRet
 
 			Next nz
 		Next nx	
+
+		nx := 0
+		nz := 0
 
 		// Executa a gravacao dos dados
 		ProcRegua(nLinhas)
@@ -214,12 +221,13 @@ If lRet
 					Endif 
 
 					// Verifica se existe saldo do produto
-					If !Empty(aDados[nx,nz,1])
+					If !Empty(aDados[nx,nz,1]) .And. !Empty(aDados[nx,nz,4])
 
-						SB2->(DbSetOrder(1))
-						If SB2->(DbSeek(xFilial('SB2') + aDados[nx,nz,1] + aDados[nx,nz,2])) .And. SB2->B2_QATU > 0
+//						SB2->(DbSetOrder(1))
+//						If SB2->(DbSeek(xFilial('SB2') + aDados[nx,nz,1] + aDados[nx,nz,2])) .And. SB2->B2_QATU > 0
 							
-							nSaldoB2 := SB2->B2_QATU
+//							nSaldoB2 := SB2->B2_QATU
+							nSaldoB2 := Val(aDados[nx,nz,4])
 
 							// Inclui movimento da SDB
 							cCounter := Soma1(cCounter)
@@ -254,10 +262,10 @@ If lRet
 
 							MatADDLog(aLogs,'Saldo distribuido'+" -> "+aDados[nx,nz,1],6,aDados[nx,nz,1],aDados[nx,nz,2],nx,nz) // "Saldo distribuido"
 
-						Else
+						//Else
 							// Adiciona registro em array para Log        
-							MatADDLog(aLogs,'Produto sem saldo em estoque'+" -> "+aDados[nx,nz,1],6,aDados[nx,nz,1],aDados[nx,nz,2],nx,nz) // "Produto sem saldo em estoque"
-						Endif 
+						//	MatADDLog(aLogs,'Produto sem saldo em estoque'+" -> "+aDados[nx,nz,1],6,aDados[nx,nz,1],aDados[nx,nz,2],nx,nz) // "Produto sem saldo em estoque"
+						//Endif 
 
 					Endif 
 

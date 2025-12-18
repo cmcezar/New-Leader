@@ -77,7 +77,8 @@ Static Function RunProc(cFile,aRegs)
 		aAdd(aAux,{;
 			aItem[1] + Space(TAMSX3("B1_COD")[1] - Len(aItem[1]))	,;	//COLUNA 01 - Codigo do produto
 			aItem[2]															,;	//COLUNA 02 - Almoxarifado
-			aItem[3]															 ;	//COLUNA 05 - Localizacao
+			aItem[3]															,;	//COLUNA 03 - Localizacao
+			aItem[4]															;	//COLUNA 04 - Quantidade
 		})
 		aAdd(aRegs,aAux)
 		aAux := {}
