@@ -47,6 +47,7 @@ BeginSQL Alias cAliasSDA
     FROM %Table:CB9% CB9 INNER JOIN %Table:SDA% SDA ON
             DA_FILIAL = %xFilial:SDA%
         AND DA_DOC    = CB9_DOC
+        AND DA_SALDO  > 0
         AND SDA.%notdel%
     WHERE CB9_FILIAL   = %xFilial:CB9%
         AND CB9_ORDSEP = %Exp:cOrdSep%
