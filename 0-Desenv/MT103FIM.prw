@@ -17,10 +17,32 @@ User Function MT103FIM()
 Local nOpcao    := PARAMIXB[1]   // Opção Escolhida pelo usuario no aRotina 
 Local nConfirma := PARAMIXB[2]   // Se o usuario confirmou a operação de gravação da NFECODIGO DE APLICAÇÃO DO USUARIO
 
+If Inclui .And. nConfirma = 1
+
+    Processa( {|| U_PutSDB(nOpcao) }, 'Aguarde...', 'Endereçando produtos ...',.F.) 	
+
+Endif
+
+Return Nil
+
+//------------------------------------------------------------\\
+/*/{Protheus.doc} PutSDB
+//TODO Executa o endereçamento dos produtos.
+@author Claudio Macedo
+@since 15/09/2025
+@version 1.0
+@return Nil
+@type Function
+/*/
+//------------------------------------------------------------\\
+User Function PutSDB(nOpcao)
+
 Local aCabSDA := {}
 Local aItem   := {}
 Local aItens  := {}
 Local cEnder  := ''
+Local lEnder  := .F.
+Local lErro   := .F.
 
 Local cAliasSDA := GetNextAlias()
 
@@ -31,70 +53,79 @@ Private cLoja   := SD1->D1_LOJA
 
 Private lMsErroAuto := .F.
 
-If Inclui .And. nConfirma = 1
+// Endereça os produtos que já possuem saldo em um endereço
 
-    // Endereça os produtos que já possuem saldo em um endereço
+BeginSQL Alias cAliasSDA
+    SELECT DA_PRODUTO, DA_NUMSEQ, DA_LOCAL, DA_QTDORI
+    FROM %Table:SDA% SDA
+    WHERE DA_FILIAL   = %xFilial:SDA%
+        AND DA_DOC    = %Exp:cNota%
+        AND DA_SERIE  = %Exp:cSerie%
+        AND DA_CLIFOR = %Exp:cFornec%
+        AND DA_LOJA   = %Exp:cLoja%
+        AND DA_SALDO > 0
+        AND SDA.%notdel%
+EndSql 
 
-    BeginSQL Alias cAliasSDA
-        SELECT DA_PRODUTO, DA_NUMSEQ, DA_LOCAL, DA_QTDORI
-        FROM %Table:SDA% SDA
-        WHERE DA_FILIAL   = %xFilial:SDA%
-            AND DA_DOC    = %Exp:cNota%
-            AND DA_SERIE  = %Exp:cSerie%
-            AND DA_CLIFOR = %Exp:cFornec%
-            AND DA_LOJA   = %Exp:cLoja%
-            AND DA_SALDO > 0
-            AND SDA.%notdel%
-    EndSql 
+ProcRegua((cAliasSDA)->(RecCount()))
 
-    (cAliasSDA)->(DbGoTop())
+(cAliasSDA)->(DbGoTop())
 
-    While !(cAliasSDA)->(EOF())
+While !(cAliasSDA)->(EOF())
 
-        ZZ2->(DbSetOrder(2))    // Filial+Produto+Local
-        If ZZ2->(DbSeek(xFilial('ZZ2') + (cAliasSDA)->DA_PRODUTO + (cAliasSDA)->DA_LOCAL))
+ 	IncProc()
 
-            cEnder := ZZ2->ZZ2_LOCALI      // Pega o primeiro endereço
+    ZZ2->(DbSetOrder(2))    // Filial+Produto+Local
+    If ZZ2->(DbSeek(xFilial('ZZ2') + (cAliasSDA)->DA_PRODUTO + (cAliasSDA)->DA_LOCAL))
 
-            aItens := {}
+        cEnder := ZZ2->ZZ2_LOCALI      // Pega o primeiro endereço
 
-            //Cabecalho com a informação do item e NumSeq que sera endereçado.
-            aCabSDA := {{'DA_PRODUTO' ,(cAliasSDA)->DA_PRODUTO, Nil},;
-                        {'DA_NUMSEQ'  ,(cAliasSDA)->DA_NUMSEQ , Nil}}
+        aItens := {}
 
-            //Dados do item que será endereçado
-            aItem := {{'DB_ITEM'   , '0001'   , Nil},;
-                      {'DB_ESTORNO', ' '      , Nil},;
-                      {'DB_LOCAL'  , (cAliasSDA)->DA_LOCAL , Nil},;
-                      {'DB_LOCALIZ', cEnder   , Nil},;
-                      {'DB_DATA'   , dDataBase, Nil},;
-                      {'DB_QUANT'  , (cAliasSDA)->DA_QTDORI, Nil}}
+        //Cabecalho com a informação do item e NumSeq que sera endereçado.
+        aCabSDA := {{'DA_PRODUTO' ,(cAliasSDA)->DA_PRODUTO, Nil},;
+                    {'DA_NUMSEQ'  ,(cAliasSDA)->DA_NUMSEQ , Nil}}
 
-            aadd(aItens,aItem)
+        //Dados do item que será endereçado
+        aItem := {{'DB_ITEM'   , '0001'   , Nil},;
+                    {'DB_ESTORNO', ' '      , Nil},;
+                    {'DB_LOCAL'  , (cAliasSDA)->DA_LOCAL , Nil},;
+                    {'DB_LOCALIZ', cEnder   , Nil},;
+                    {'DB_DATA'   , dDataBase, Nil},;
+                    {'DB_QUANT'  , (cAliasSDA)->DA_QTDORI, Nil}}
 
-            //Executa o endereçamento do item
-            MATA265(aCabSDA, aItens, nOpcao)
+        aadd(aItens,aItem)
 
-            If lMsErroAuto
-                MostraErro()
-            Else
-                MsgInfo('Produtos endereçados !', 'Sucesso')
-            Endif
+        //Executa o endereçamento do item
+        MATA265(aCabSDA, aItens, nOpcao)
 
-        Endif 
+        If lMsErroAuto
+            MostraErro()
+        Else
+            lEnder := .T.
+            //MsgInfo('Produtos endereçados !', 'Sucesso')
+        Endif
 
-        (cAliasSDA)->(DbSkip())
+    Endif 
 
-    Enddo 
+    (cAliasSDA)->(DbSkip())
 
-    (cAliasSDA)->(DbCloseArea())
+Enddo 
 
-    // Imprime o relatório dos endereços dos produtos da nota fiscal
+(cAliasSDA)->(DbCloseArea())
 
-    If MsgYesNo('Deseja imprimir o relatório de endereços dos produtos ?')
+// Imprime o relatório dos endereços dos produtos da nota fiscal
+
+If lEnder .And. !lErro
+    If MsgYesNo('Produtos endereçados com sucesso !' + CRLF +;
+                'Deseja imprimir o relatório de endereços dos produtos ?')
         U_NLEST001()
     Endif
-
+ElseIf lEnder .And. lErro
+    If MsgYesNo('Ocorreram erros em alguns produtos no momento do endereçamento.' + CRLF +;
+                'Deseja imprimir o relatório de endereços dos produtos ?')
+        U_NLEST001()
+    Endif
 Endif 
 
 Return Nil

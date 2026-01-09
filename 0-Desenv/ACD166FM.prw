@@ -15,5 +15,6 @@
 User Function ACD166FM()
 
 CBAlert('ACD166FM','.:Aviso:.',.T.,,2)
+CBAlert(CB7->CB7_ORDSEP,'.:Aviso:.',.T.,,2)
 
 Return Nil
