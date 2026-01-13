@@ -119,12 +119,12 @@ Enddo
 If lEnder .And. !lErro
     If MsgYesNo('Produtos endereçados com sucesso !' + CRLF +;
                 'Deseja imprimir o relatório de endereços dos produtos ?')
-        U_NLEST001()
+        U_NLEST001(cNota, cSerie, cFornec, cLoja)
     Endif
 ElseIf lEnder .And. lErro
     If MsgYesNo('Ocorreram erros em alguns produtos no momento do endereçamento.' + CRLF +;
                 'Deseja imprimir o relatório de endereços dos produtos ?')
-        U_NLEST001()
+        U_NLEST001(cNota, cSerie, cFornec, cLoja)
     Endif
 Endif 
 
@@ -140,9 +140,9 @@ Return Nil
 @type Function
 /*/
 //------------------------------------------------------\\
-User Function NLEST001()
+User Function NLEST001(cNota, cSerie, cFornec, cLoja)
 
-Local oReport := ReportDef()
+Local oReport := ReportDef(cNota, cSerie, cFornec, cLoja)
 
 oReport:PrintDialog()
 
@@ -159,14 +159,15 @@ Return
 @type Function
 /*/
 //------------------------------------------------------\\
-Static Function ReportDef(cNome)
+//Static Function ReportDef(cNome)
+Static Function ReportDef(cNota, cSerie, cFornec, cLoja)
 
 Local oReport   := Nil
 Local oSection1 := Nil
 
 Static cAliasSDA := GetNextAlias()
 
-oReport := TReport():New('NLEST001',,, {|oReport| ReportPrint(oReport,cAliasSDA)})
+oReport := TReport():New('NLEST001',,, {|oReport| ReportPrint(oReport, cAliasSDA, cNota, cSerie, cFornec, cLoja)})
 
 oSection1 := TRSection():New(oReport,'Endereços dos produtos da NF', cAliasSDA)                                                                                                                                                                       
 oSection1:SetTotalInLine(.F.)
@@ -179,13 +180,14 @@ oReport:SetTitle('Endereços dos produtos da NF')
 
 // TRCell():New(oParent, cName, cAlias, cTitle, cPicture, nSize, lPixel, bBlock, cAlign, lLineBreak, cHeaderAlign, lCellBreak, nColSpace, lAutoSize, nClrBack, nClrFore, lBold)                                                                                                                                                                  
 
-TRCell():New(oSection1, 'DA_DOC'    , cAliasSDA, 'Nota Fiscal', '@!'        ,  9,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'DA_SERIE'  , cAliasSDA, 'Série'      , '@!'        ,  3,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'DA_DATA'   , cAliasSDA, 'Data'       , '@!'        , 10,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'DA_PRODUTO', cAliasSDA, 'Produto'    , '@!'        , 15,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'DA_QTDORI' , cAliasSDA, 'Quantidade' , '@E 999,999',  7,,, 'RIGHT',,'RIGHT',,2,,,,.F.)          
+TRCell():New(oSection1, 'D1_DOC'    , cAliasSDA, 'Nota Fiscal', '@!'        ,  9,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
+TRCell():New(oSection1, 'D1_SERIE'  , cAliasSDA, 'Série'      , '@!'        ,  3,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
+TRCell():New(oSection1, 'D1_COD'    , cAliasSDA, 'Produto'    , '@!'        , 15,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
+TRCell():New(oSection1, 'B1_LOCALIZ', cAliasSDA, 'Cont. End.' , '@!'        , 12,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)             
+TRCell():New(oSection1, 'D1_DTDIGIT', cAliasSDA, 'Data'       , '@!'        , 10,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
+TRCell():New(oSection1, 'D1_QUANT'  , cAliasSDA, 'Quantidade' , '@E 999,999',  7,,, 'RIGHT',,'RIGHT',,2,,,,.F.)          
 TRCell():New(oSection1, 'B1_UM'     , cAliasSDA, 'UM'         , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)          
-TRCell():New(oSection1, 'DA_LOCAL'  , cAliasSDA, 'Local'      , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)          
+TRCell():New(oSection1, 'D1_LOCAL'  , cAliasSDA, 'Local'      , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)          
 TRCell():New(oSection1, 'DB_LOCALIZ', cAliasSDA, 'Endereço'   , '@!'        , 12,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)             
 TRCell():New(oSection1, 'B1_DESC'   , cAliasSDA, 'Descrição'  , '@!'        , 70,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
 
@@ -203,30 +205,37 @@ Return oReport
 @type function
 /*/
 //------------------------------------------------------\\
-Static Function ReportPrint(oReport, cAliasSDA)
+Static Function ReportPrint(oReport, cAliasSDA, cNota, cSerie, cFornec, cLoja)
 
 Local oSection1 := oReport:Section(1)
 
 BeginSQL Alias cAliasSDA
 
 	Column DA_DATA  as Date		
-		
-	SELECT DA_DOC, DA_SERIE, DA_DATA, DA_PRODUTO, DA_QTDORI, B1_DESC, B1_UM, DA_LOCAL, ISNULL(DB_LOCALIZ,'') AS DB_LOCALIZ
-	FROM %Table:SDA% SDA LEFT OUTER JOIN %Table:SDB% SDB ON 
+
+	SELECT D1_DOC, D1_SERIE, D1_COD, B1_LOCALIZ, D1_DTDIGIT, D1_QUANT, B1_UM, D1_LOCAL, ISNULL(DB_LOCALIZ,'') AS DB_LOCALIZ, B1_DESC
+	FROM %Table:SD1% SD1 LEFT OUTER JOIN %Table:SDA% SDA ON
+            DA_FILIAL  = %xFilial:SDA%    
+        AND DA_DOC     = D1_DOC
+        AND DA_SERIE   = D1_SERIE
+        AND DA_CLIFOR  = D1_FORNECE
+        AND DA_LOJA    = D1_LOJA
+        AND DA_PRODUTO = D1_COD
+        AND SDA.%notdel% LEFT OUTER JOIN %Table:SDB% SDB ON 
 			DB_FILIAL = %xFilial:SDB%
 		AND DB_NUMSEQ = DA_NUMSEQ
 		AND SDB.%notdel% INNER JOIN %Table:SB1% SB1 ON
 			B1_FILIAL = %xFilial:SB1%
-		AND	B1_COD    = DA_PRODUTO
+		AND	B1_COD    = D1_COD
         AND B1_MSBLQL <> '1'
 		AND SB1.%notdel% 
-	WHERE DA_FILIAL   = %xFilial:SDA%
-        AND DA_DOC    = %Exp:cNota%
-        AND DA_SERIE  = %Exp:cSerie%
-        AND DA_CLIFOR = %Exp:cFornec%
-        AND DA_LOJA   = %Exp:cLoja%
-        AND SDA.%notdel%
-	ORDER BY DA_LOCAL
+	WHERE D1_FILIAL    = %xFilial:SD1%
+        AND D1_DOC     = %Exp:cNota%
+        AND D1_SERIE   = %Exp:cSerie%
+        AND D1_FORNECE = %Exp:cFornec%
+        AND D1_LOJA    = %Exp:cLoja%
+        AND SD1.%notdel%
+	ORDER BY DA_LOCAL, D1_COD
 
 EndSQL
 	
