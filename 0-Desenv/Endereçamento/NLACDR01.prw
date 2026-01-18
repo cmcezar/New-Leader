@@ -41,8 +41,8 @@ Private nMaxCol	:= 800
 
 cSession	:= GetPrinterSession()
 cDevice	:= If(Empty(fwGetProfString(cSession,"PRINTTYPE","SPOOL",.T.)),"PDF",fwGetProfString(cSession,"PRINTTYPE","SPOOL",.T.))
-//nOrient	:= If(fwGetProfString(cSession,"ORIENTATION","PORTRAIT",.T.)=="PORTRAIT",1,2)
-nOrient	    := 1	// PORTRAIT
+nOrient	:= If(fwGetProfString(cSession,"ORIENTATION","PORTRAIT",.T.)=="PORTRAIT",1,2)
+//nOrient	    := 1	// PORTRAIT
 nLocal		:= If(fwGetProfString(cSession,"LOCAL","SERVER",.T.)=="SERVER",1,2 )
 nPrintType	:= aScan(aDevice,{|x| x == cDevice })     
 
@@ -101,7 +101,7 @@ Return Nil
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
 User Function NL100Imp(lEnd,oPrinter)
 
-Local nMaxLinha	:= 40
+Local nMaxLinha	:= 11//40
 Local nLinCount	:= 0
 Local aArea		:= GetArea()
 Local cQry			:= ""
@@ -117,11 +117,11 @@ Private nColSLt	:= nColLot+85
 Private nSerie	:= nColSLt+40
 Private nQtOri	:= nSerie+110
 //Private nQtSep	:= nQtOri+85
-Private nQtSep	:= nColEnd+222
-Private nQtEmb	:= nQtSep+85
-Private oFontA7	:= TFont():New('Arial',,7,.T.)
-Private oFontA12	:= TFont():New('Arial',,12,.T.)
-Private oFontC8	:= TFont():New('Courier new',,8,.T.)
+Private nQtSep	 := nColEnd+222
+Private nQtEmb	 := nQtSep+85
+Private oFontA7	 := TFont():New('Arial',,7,.T.)
+Private oFontA12 := TFont():New('Arial',,12,.T.)
+Private oFontC8	 := TFont():New('Courier new',,8,.T.)
 //Private li			:= 10
 Private li		:= 40
 Private nLiItm	:= 0
@@ -165,6 +165,7 @@ While !(cAliasOS)->(Eof())
 	IncRegua()
 	nLiItm		:= 110
 	nLinCount	:= 0
+	nLinCB	:= 13
 	nPag++
 	oPrinter:StartPage()
 	U_NLCabPag(@oPrinter)
@@ -173,17 +174,14 @@ While !(cAliasOS)->(Eof())
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Imprime os titulos das colunas dos itens ³ 
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	oPrinter:SayAlign(li+100,nMargDir,STR0005,oFontC8,200,200,,0)//"Produto"
-	oPrinter:SayAlign(li+100,nColAmz,STR0006,oFontC8,200,200,,0)//"Armazem"
-	oPrinter:SayAlign(li+100,nColEnd,STR0007,oFontC8,200,200,,0)//"Endereço"
-	//oPrinter:SayAlign(li+100,nColLot,STR0008,oFontC8,200,200,,0)//"Lote"
-	//oPrinter:SayAlign(li+100,nColSLt,STR0009,oFontC8,200,200,,0)//"SubLt."
-	//oPrinter:SayAlign(li+100,nSerie,STR0010,oFontC8,200,200,,0)//"Num. Série"
-	//oPrinter:SayAlign(li+100,nQtOri,STR0011,oFontC8,200,200,,0)//"Qtde. Original"
-	oPrinter:SayAlign(li+100,nQtSep,STR0012,oFontC8,200,200,,0)//"Qtd. a Separar"
+	
+	oPrinter:SayAlign(li+100,15,'Armaz�m',oFontC8,200,200,,0)//"Armazem"
+	oPrinter:SayAlign(li+100,116 /*120*/,'Endere�o',oFontC8,200,200,,0)//"Endereço"
+	oPrinter:SayAlign(li+100,354 /*350*/,'Qtd. a Separar',oFontC8,200,200,,0)//"Qtd. a Separar"
+	oPrinter:SayAlign(li+100,566 /*560*/,'Produto',oFontC8,200,200,,0)//"Produto"
 	//oPrinter:SayAlign(li+100,nQtEmb,STR0013,oFontC8,200,200,,0)//"Qtd. a Embalar"
 	oPrinter:Line(li+110,nMargDir, li+110, nMaxCol-nMargEsq,, "-2")
-
+	
 	cOrdSep := (cAliasOS)->CB7_ORDSEP
 	
 	While !(cAliasOS)->(Eof()) .and. (cAliasOS)->CB8_ORDSEP == cOrdSep
@@ -194,21 +192,20 @@ While !(cAliasOS)->(Eof())
 			oPrinter:StartPage()
 			nPag++
 			U_NLCabPag(@oPrinter)
+			U_NLCabIt(@oPrinter,(cAliasOS)->CB7_ORIGEM)
 			nLiItm		:= li+50
 			nLinCount	:= 0
+			nLinCB	:= 13
+
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³ Imprime os titulos das colunas dos itens ³ 
 			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ			
-			oPrinter:SayAlign(nLiItm,nMargDir,STR0014,oFontC8,200,200,,0)//"Produto"
-			oPrinter:SayAlign(nLiItm,nColAmz,STR0015,oFontC8,200,200,,0)//"Armazem"
-			oPrinter:SayAlign(nLiItm,nColEnd,STR0016,oFontC8,200,200,,0)//"Endereço"
-//			oPrinter:SayAlign(nLiItm,nColLot,STR0017,oFontC8,200,200,,0)//"Lote"
-//			oPrinter:SayAlign(nLiItm,nColSLt,STR0018,oFontC8,200,200,,0)//"SubLt."
-//			oPrinter:SayAlign(nLiItm,nSerie,STR0019,oFontC8,200,200,,0)//"Num. Série"
-//			oPrinter:SayAlign(nLiItm,nQtOri,STR0020,oFontC8,200,200,,0)//"Qtde. Original"
-			oPrinter:SayAlign(nLiItm,nQtSep,STR0021,oFontC8,200,200,,0)//"Qtd. a Separar"
-//			oPrinter:SayAlign(nLiItm,nQtEmb,STR0022,oFontC8,200,200,,0)//"Qtd. a Embalar"
-			oPrinter:Line(li+nLiItm,nMargDir, li+nLiItm, nMaxCol-nMargEsq,, "-2")
+			oPrinter:SayAlign(li+100,15,'Armaz�m',oFontC8,200,200,,0)//"Armazem"
+			oPrinter:SayAlign(li+100,114,'Endere�o',oFontC8,200,200,,0)//"Endereço"
+			oPrinter:SayAlign(li+100,354,'Qtd. a Separar',oFontC8,200,200,,0)//"Qtd. a Separar"
+			oPrinter:SayAlign(li+100,566,'Produto',oFontC8,200,200,,0)//"Produto"
+			//oPrinter:SayAlign(li+100,nQtEmb,STR0013,oFontC8,200,200,,0)//"Qtd. a Embalar"
+			oPrinter:Line(li+110,nMargDir, li+110, nMaxCol-nMargEsq,, "-2")
 		EndIf
 
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -228,10 +225,11 @@ While !(cAliasOS)->(Eof())
 		
 		If MV_PAR06 == 1
 //			oPrinter:FWMSBAR("CODE128",20/*li+nLiItm/*nRow*/, 20/*nMargDir/*nCol*/,AllTrim((cAliasOS)->CB8_PROD),oPrinter,,,, 0.049,1.0,,,,.T.,,,)
-			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,2/*nCol*/,AllTrim((cAliasOS)->CB8_PROD)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
-			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,15/*nCol*/,AllTrim((cAliasOS)->CB8_LOCAL)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
-			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,27/*nCol*/,AllTrim((cAliasOS)->CB8_LCALIZ)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
-			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,48/*nCol*/,Transform((cAliasOS)->CB8_SALDOE,PesqPictQt("CB8_QTDORI",20))/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,2/*nCol*/,AllTrim((cAliasOS)->CB8_LOCAL)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,10/*nCol*/,AllTrim((cAliasOS)->CB8_LCALIZ)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+//			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,30/*nCol*/,Transform((cAliasOS)->CB8_SALDOE,PesqPictQt("CB8_QTDORI",20))/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,30/*nCol*/,Alltrim(Str((cAliasOS)->CB8_SALDOS))/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,48/*nCol*/,AllTrim((cAliasOS)->CB8_PROD)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.3/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
 //			oPrinter:Line(nLinCB+1, nMargDir, nLinCB+1, nMaxCol-nMargEsq,, "-2")
 		EndIf
 
@@ -244,7 +242,7 @@ While !(cAliasOS)->(Eof())
 			oPrinter:EndPage()
 		Else
 //			nLiItm += li
-			nLinCB += 2
+			nLinCB += 3
 		EndIf
 			
 		(cAliasOS)->(dbSkip())
