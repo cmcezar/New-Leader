@@ -176,8 +176,8 @@ While !(cAliasOS)->(Eof())
 	//³ Imprime os titulos das colunas dos itens ³ 
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
-	oPrinter:SayAlign(li+100,115 /*15*/,'Armaz�m',oFontC8,200,200,,0)//"Armazem"
-	oPrinter:SayAlign(li+100,216 /*116*/,'Endere�o',oFontC8,200,200,,0)//"Endereço"
+	oPrinter:SayAlign(li+100,115 /*15*/,'Armaz�m/Endere�o',oFontC8,200,200,,0)//"Armazem"
+	//oPrinter:SayAlign(li+100,216 /*116*/,'Endere�o',oFontC8,200,200,,0)//"Endereço"
 	oPrinter:SayAlign(li+100,454 /*354*/,'Qtd. a Separar',oFontC8,200,200,,0)//"Qtd. a Separar"
 	oPrinter:SayAlign(li+100,668 /*566*/,'Produto',oFontC8,200,200,,0)//"Produto"
 	//oPrinter:SayAlign(li+100,nQtEmb,STR0013,oFontC8,200,200,,0)//"Qtd. a Embalar"
@@ -201,34 +201,19 @@ While !(cAliasOS)->(Eof())
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³ Imprime os titulos das colunas dos itens ³ 
 			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ			
-			oPrinter:SayAlign(li+100,115,'Armaz�m',oFontC8,200,200,,0)//"Armazem"
-			oPrinter:SayAlign(li+100,216,'Endere�o',oFontC8,200,200,,0)//"Endereço"
+			oPrinter:SayAlign(li+100,115,'Armaz�m/Endere�o',oFontC8,200,200,,0)//"Armazem"
+			//oPrinter:SayAlign(li+100,216,'Endere�o',oFontC8,200,200,,0)//"Endereço"
 			oPrinter:SayAlign(li+100,454,'Qtd. a Separar',oFontC8,200,200,,0)//"Qtd. a Separar"
 			oPrinter:SayAlign(li+100,668,'Produto',oFontC8,200,200,,0)//"Produto"
 			//oPrinter:SayAlign(li+100,nQtEmb,STR0013,oFontC8,200,200,,0)//"Qtd. a Embalar"
 			oPrinter:Line(li+110,nMargDir, li+110, nMaxCol-nMargEsq,, "-2")
 		EndIf
-
-		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-		//³ Imprime os itens da ordem de separacao ³ 
-		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-		/*
-		oPrinter:SayAlign(li+nLiItm,nMargDir,(cAliasOS)->CB8_PROD,oFontC8,200,200,,0)
-		oPrinter:SayAlign(li+nLiItm,nColAmz,(cAliasOS)->CB8_LOCAL,oFontC8,200,200,,0)
-		oPrinter:SayAlign(li+nLiItm,nColEnd,(cAliasOS)->CB8_LCALIZ,oFontC8,200,200,,0)
-		oPrinter:SayAlign(li+nLiItm,nColLot,(cAliasOS)->CB8_LOTECT,oFontC8,200,200,,0)
-		oPrinter:SayAlign(li+nLiItm,nColSLt,(cAliasOS)->CB8_NUMLOT,oFontC8,200,200,,0)
-		oPrinter:SayAlign(li+nLiItm,nSerie,(cAliasOS)->CB8_NUMSER,oFontC8,200,200,,0)
-		oPrinter:SayAlign(li+nLiItm,nQtOri+li,Transform((cAliasOS)->CB8_QTDORI,PesqPictQt("CB8_QTDORI",20)),oFontC8,200,200,1,0) 
-		oPrinter:SayAlign(li+nLiItm,nQtSep+li,Transform((cAliasOS)->CB8_SALDOS,PesqPictQt("CB8_QTDORI",20)),oFontC8,200,200,1,0)
-		oPrinter:SayAlign(li+nLiItm,nQtEmb+li,Transform((cAliasOS)->CB8_SALDOE,PesqPictQt("CB8_QTDORI",20)),oFontC8,200,200,1,0)
-		*/
 		
 		If MV_PAR06 == 1
 			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,2        /*nCol*/,AllTrim((cAliasOS)->CB8_LOCAL)+AllTrim((cAliasOS)->CB8_LCALIZ),oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
-			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,22 /*2*/ /*nCol*/,AllTrim((cAliasOS)->CB8_LOCAL)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
-			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,30 /*10*/ /*nCol*/,AllTrim((cAliasOS)->CB8_LCALIZ)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
-			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,50 /*30*/ /*nCol*/,Alltrim(Str((cAliasOS)->CB8_SALDOS))/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+			//oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,22 /*2*/ /*nCol*/,AllTrim((cAliasOS)->CB8_LOCAL)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+			//oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,30 /*10*/ /*nCol*/,AllTrim((cAliasOS)->CB8_LCALIZ)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
+			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,30 /*30*/ /*nCol*/,Alltrim(Str((cAliasOS)->CB8_SALDOS))/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
 			oPrinter:FWMSBAR("CODE128" /*cTypeBar*/,nLinCB/*nRow*/,58 /*48*/ /*nCol*/,AllTrim((cAliasOS)->CB8_PROD)/*cCode*/,oPrinter/*oPrint*/,/*lCheck*/,/*Color*/,/*lHorz*/, /*nWidth*/,0.5/*nHeigth*/,.T./*lBanner*/,/*cFont*/,/*cMode*/,.F./*lPrint*/,/*nPFWidth*/,/*nPFHeigth*/,/*lCmtr2Pix*/)
 //			oPrinter:Line(nLinCB+1, nMargDir, nLinCB+1, nMaxCol-nMargEsq,, "-2")
 		EndIf

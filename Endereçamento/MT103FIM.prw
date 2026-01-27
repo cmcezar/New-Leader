@@ -180,16 +180,17 @@ oReport:SetTitle('Endereços dos produtos da NF')
 
 // TRCell():New(oParent, cName, cAlias, cTitle, cPicture, nSize, lPixel, bBlock, cAlign, lLineBreak, cHeaderAlign, lCellBreak, nColSpace, lAutoSize, nClrBack, nClrFore, lBold)                                                                                                                                                                  
 
-TRCell():New(oSection1, 'D1_DOC'    , cAliasSDA, 'Nota Fiscal', '@!'        ,  9,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'D1_SERIE'  , cAliasSDA, 'Série'      , '@!'        ,  3,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'D1_COD'    , cAliasSDA, 'Produto'    , '@!'        , 15,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'B1_LOCALIZ', cAliasSDA, 'Cont. End.' , '@!'        , 12,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)             
-TRCell():New(oSection1, 'D1_DTDIGIT', cAliasSDA, 'Data'       , '@!'        , 10,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
-TRCell():New(oSection1, 'D1_QUANT'  , cAliasSDA, 'Quantidade' , '@E 999,999',  7,,, 'RIGHT',,'RIGHT',,2,,,,.F.)          
-TRCell():New(oSection1, 'B1_UM'     , cAliasSDA, 'UM'         , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)          
-TRCell():New(oSection1, 'D1_LOCAL'  , cAliasSDA, 'Local'      , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)          
-TRCell():New(oSection1, 'DB_LOCALIZ', cAliasSDA, 'Endereço'   , '@!'        , 12,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)             
-TRCell():New(oSection1, 'B1_DESC'   , cAliasSDA, 'Descrição'  , '@!'        , 70,,, 'LEFT' ,,'LEFT' ,,2,,,,.F.)
+TRCell():New(oSection1, 'D1_DOC'    , cAliasSDA, 'Nota Fiscal', '@!'        ,  9,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)
+TRCell():New(oSection1, 'D1_SERIE'  , cAliasSDA, 'Série'      , '@!'        ,  3,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)
+TRCell():New(oSection1, 'A2_NREDUZ' , cAliasSDA, 'Nome'       , '@!'        , 20,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)
+TRCell():New(oSection1, 'D1_COD'    , cAliasSDA, 'Produto'    , '@!'        , 15,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)
+TRCell():New(oSection1, 'B1_LOCALIZ', cAliasSDA, 'Cont. End.' , '@!'        , 12,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)             
+TRCell():New(oSection1, 'D1_DTDIGIT', cAliasSDA, 'Data'       , '@!'        , 10,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)
+TRCell():New(oSection1, 'D1_QUANT'  , cAliasSDA, '   Qtde'    , '@E 999,999',  7,,, 'RIGHT',,'RIGHT',,1,,,,.F.)          
+TRCell():New(oSection1, 'B1_UM'     , cAliasSDA, 'UM'         , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)          
+TRCell():New(oSection1, 'D1_LOCAL'  , cAliasSDA, 'Local'      , '@!'        ,  2,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)          
+TRCell():New(oSection1, 'DB_LOCALIZ', cAliasSDA, 'Endereço'   , '@!'        , 12,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)             
+TRCell():New(oSection1, 'B1_DESC'   , cAliasSDA, 'Descrição'  , '@!'        , 50,,, 'LEFT' ,,'LEFT' ,,1,,,,.F.)
 
 oSection1:SetHeaderPage(.F.)
 oSection1:SetPageBreak(.F.)     
@@ -211,9 +212,9 @@ Local oSection1 := oReport:Section(1)
 
 BeginSQL Alias cAliasSDA
 
-	Column DA_DATA  as Date		
+	Column D1_DTDIGIT as Date		
 
-	SELECT D1_DOC, D1_SERIE, D1_COD, B1_LOCALIZ, D1_DTDIGIT, D1_QUANT, B1_UM, D1_LOCAL, ISNULL(DB_LOCALIZ,'') AS DB_LOCALIZ, B1_DESC
+	SELECT D1_DOC, D1_SERIE, D1_COD, B1_LOCALIZ, D1_DTDIGIT, D1_QUANT, B1_UM, D1_LOCAL, ISNULL(DB_LOCALIZ,'') AS DB_LOCALIZ, B1_DESC, A2_NREDUZ
 	FROM %Table:SD1% SD1 LEFT OUTER JOIN %Table:SDA% SDA ON
             DA_FILIAL  = %xFilial:SDA%    
         AND DA_DOC     = D1_DOC
@@ -228,7 +229,11 @@ BeginSQL Alias cAliasSDA
 			B1_FILIAL = %xFilial:SB1%
 		AND	B1_COD    = D1_COD
         AND B1_MSBLQL <> '1'
-		AND SB1.%notdel% 
+		AND SB1.%notdel% INNER JOIN %Table:SA2% SA2 ON
+            A2_FILIAL  = %xFilial:SA2%
+        AND A2_COD     = D1_FORNECE
+        AND A2_LOJA    = D1_LOJA
+        AND SA2.%notdel%
 	WHERE D1_FILIAL    = %xFilial:SD1%
         AND D1_DOC     = %Exp:cNota%
         AND D1_SERIE   = %Exp:cSerie%
