@@ -16,10 +16,15 @@
 User Function NLESTA02()
 
 Local cArquivo	:=	""
-
+Local cUsuarios := GetMV('NL_USRIMP')
 Private cNomeArq :=	""  
 Private nPos     := 0
 Private nLinhas  := 0	// Produtos lidos
+
+If !Alltrim(RETCODUSR()) $ cUsuarios
+	Alert('Usuário sem permissão para executar essa rotina !')
+	Return Nil 
+Endif 
 
 Pergunte('NLESTA02',.T.,'Atualizar tabela de produtos')
 
@@ -72,6 +77,8 @@ Local oSB1Mod := oModel:GetModel("SB1MASTER")
 //Local oSB5Mod := oModel:GetModel("SB5DETAIL")
 Local nI := 0
 Local lOK := .T.
+Local cID := GetSXeNum('ZZ3', 'ZZ3_ID')
+Local aDadosZZ3 := {}
 
 cString := FT_FReadln()
 
@@ -85,19 +92,22 @@ While !FT_FEOF()
 
 	oModel:Activate()
 
+	aDadosZZ3 := {}
 	cString := FT_FReadln()
-
 	aInfo := StrTokArr(cString,';')
 
 	For nI :=1 to Len(aInfo)
 		//Setando os campos
-		oSB1Mod:SetValue(aCabec[nI], aInfo[nI]) 
-//		oSB1Mod:SetValue("B1_DESC"   , cDesc     )
-//		oSB1Mod:SetValue("B1_TIPO"   , cTipo     ) 
-//		oSB1Mod:SetValue("B1_UM"     , cUM       ) 
-//		oSB1Mod:SetValue("B1_LOCPAD" , cLocPad   ) 
-
+		If TamSx3(aCabec[nI])[3] = 'D'
+			oSB1Mod:SetValue(aCabec[nI], Ctod(aInfo[nI])) 
+		ElseIf TamSx3(aCabec[nI])[3] = 'N'
+			oSB1Mod:SetValue(aCabec[nI], Val(aInfo[nI])) 
+		Else 
+			oSB1Mod:SetValue(aCabec[nI], aInfo[nI]) 
+		Endif 	
 	Next nI 
+
+	aAdd(aDadosZZ3, {aInfo[1]})
 
 	//If oSB5Mod != Nil
 		//oSB5Mod:SetValue("B5_CEME"   , cCEME     )
@@ -109,10 +119,24 @@ While !FT_FEOF()
 		//Tenta realizar o Commit
 		If oModel:CommitData()
 			lOk := .T.
-			
+		
+			For nI := 1 to Len(aDadosZZ3)
+				ZZ3->(reclock('ZZ3',.T.))
+				ZZ3->ZZ3_FILIAL := xFilial('ZZ3')
+				ZZ3->ZZ3_ID     := cID
+				ZZ3->ZZ3_DATA   := dDatabase
+				ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
+				ZZ3->ZZ3_TIPO   := '1'
+				ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
+				ZZ3->(MsUnlock())
+			Next nI  
+			ConfirmSX8()
+			lOk := .T.
+
 		//Se não deu certo, altera a variável para false
 		Else
-			lOk := .F.
+			RollBackSX8()
+			lOk := .F.	
 		EndIf
 		
 	//Se não conseguir validar as informações, altera a variável para false
@@ -205,9 +229,22 @@ While !FT_FEOF()
 	aInfo     := StrTokArr(cString,';')
 
 	For nI := 1 to Len(aInfo)
-		aAdd(aFields,   {aCabec[nI], aInfo[nI], Nil})
+		If TamSx3(aCabec[nI])[3] = 'D'
+			aAdd(aFields, {aCabec[nI], Ctod(aInfo[nI]), Nil}) 
+		ElseIf TamSx3(aCabec[nI])[3] = 'N'
+			aAdd(aFields, {aCabec[nI], Val(aInfo[nI]), Nil}) 
+		Else 
+			aAdd(aFields, {aCabec[nI], aInfo[nI], Nil}) 
+		Endif 	
+		//aAdd(aFields,   {aCabec[nI], aInfo[nI], Nil})
 		If nI > 1 // Pula o código do produto
-			aAdd(aDadosZZ3, {aInfo[1], aCabec[nI], Posicione('SB1',1,xFilial('SB1')+aInfo[1],aCabec[nI]), aInfo[nI]})
+			If TamSx3(aCabec[nI])[3] = 'D'
+				aAdd(aDadosZZ3, {aInfo[1], aCabec[nI], Dtoc(Posicione('SB1',1,xFilial('SB1')+aInfo[1], aCabec[nI])), aInfo[nI]})
+			ElseIf TamSx3(aCabec[nI])[3] = 'N'
+				aAdd(aDadosZZ3, {aInfo[1], aCabec[nI], Str(Posicione('SB1',1,xFilial('SB1')+aInfo[1], aCabec[nI])), aInfo[nI]})
+			Else
+				aAdd(aDadosZZ3, {aInfo[1], aCabec[nI], Posicione('SB1',1,xFilial('SB1')+aInfo[1], aCabec[nI]), aInfo[nI]})
+			Endif
 		Endif
 	Next nI
 	
@@ -222,11 +259,11 @@ While !FT_FEOF()
 			ZZ3->ZZ3_ID     := cID
 			ZZ3->ZZ3_DATA   := dDatabase
 			ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
-			ZZ3->ZZ3_TIPO   := Alltrim(Str(mv_par01))
+			ZZ3->ZZ3_TIPO   := '2'
 			ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
 			ZZ3->ZZ3_CAMPO  := GetSx3Cache(aDadosZZ3[nI,2], 'X3_TITULO')
-			ZZ3->ZZ3_ANT    := aDadosZZ3[nI,3]
-			ZZ3->ZZ3_DEP    := aDadosZZ3[nI,4]
+			ZZ3->ZZ3_ANT    := Alltrim(aDadosZZ3[nI,3])
+			ZZ3->ZZ3_DEP    := Alltrim(aDadosZZ3[nI,4])
 			ZZ3->(MsUnlock())
 		Next nI  
 		ConfirmSX8()
