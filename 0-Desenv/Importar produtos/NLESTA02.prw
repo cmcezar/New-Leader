@@ -15,14 +15,25 @@
 //----------------------------------------------\\
 User Function NLESTA02()
 
-Local cArquivo	:=	""
-Local cUsuarios := GetMV('NL_USRIMP')
+Local cArquivo :=	""
+Local cGrupos  := GetMV('NL_GRPIMP')
+Local aGrupos  := UsrRetGrp(RETCODUSR())
+Local lGrupo   := .F.
+Local nI := 0
+
 Private cNomeArq :=	""  
 Private nPos     := 0
 Private nLinhas  := 0	// Produtos lidos
 
-If !Alltrim(RETCODUSR()) $ cUsuarios
-	Alert('Usuário sem permissão para executar essa rotina !')
+For nI := 1 to Len(aGrupos)
+	If aGrupos[nI] $ cGrupos
+		lGrupo := .T.
+		Exit
+	Endif 
+Next nI 
+
+If !lGrupo
+	Alert('Grupo do usuário sem permissão para executar essa rotina !')
 	Return Nil 
 Endif 
 
@@ -67,13 +78,14 @@ Return Nil
 //----------------------------------------------\\
 Static Function IncluiProd()
                                   
-Local cString := FT_FReadln()
-Local nLinha  := 1
-Local aCabec  := {}
-Local aInfo   := {}
-Local nProc   := 0	// Produtos atualizados
-Local oModel  := FWLoadModel("MATA010") 
-Local oSB1Mod := oModel:GetModel("SB1MASTER")
+Local cString  := FT_FReadln()
+Local nLinha   := 0
+Local aCabec   := {}
+Local aInfo    := {}
+Local nProc    := 0	// Registros atualizados
+Local nProcErr := 0	// Registros com erros
+Local oModel   := FWLoadModel("MATA010") 
+Local oSB1Mod  := oModel:GetModel("SB1MASTER")
 //Local oSB5Mod := oModel:GetModel("SB5DETAIL")
 Local nI := 0
 Local lOK := .T.
@@ -124,10 +136,12 @@ While !FT_FEOF()
 				ZZ3->(reclock('ZZ3',.T.))
 				ZZ3->ZZ3_FILIAL := xFilial('ZZ3')
 				ZZ3->ZZ3_ID     := cID
+				ZZ3->ZZ3_LINHA  := StrZero(nLinha += 1,6)
 				ZZ3->ZZ3_DATA   := dDatabase
 				ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
 				ZZ3->ZZ3_TIPO   := '1'
 				ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
+				ZZ3->ZZ3_STATUS := '1'
 				ZZ3->(MsUnlock())
 			Next nI  
 			ConfirmSX8()
@@ -135,7 +149,23 @@ While !FT_FEOF()
 
 		//Se não deu certo, altera a variável para false
 		Else
-			RollBackSX8()
+			cMessage := ''
+			For nI := 1 to Len(aDadosZZ3)
+				ZZ3->(reclock('ZZ3',.T.))
+				ZZ3->ZZ3_FILIAL := xFilial('ZZ3')
+				ZZ3->ZZ3_ID     := cID
+				ZZ3->ZZ3_LINHA  := StrZero(nLinha += 1,6)
+				ZZ3->ZZ3_DATA   := dDatabase
+				ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
+				ZZ3->ZZ3_TIPO   := '1'
+				ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
+				ZZ3->ZZ3_ERRO   := 'Erro no commit do modelo de dados'
+				ZZ3->ZZ3_STATUS := '2'
+				ZZ3->(MsUnlock())
+			Next nI 
+
+			//RollBackSX8()
+			ConfirmSX8()
 			lOk := .F.	
 		EndIf
 		
@@ -146,23 +176,41 @@ While !FT_FEOF()
 	
 	//Se não deu certo a inclusão, mostra a mensagem de erro
 	If ! lOk
+		cMessage := ''
 		//Busca o Erro do Modelo de Dados
 		aErro := oModel:GetErrorMessage()
 		
 		//Monta o Texto que será mostrado na tela
-		cMessage := "Id do formulário de origem:"  + ' [' + cValToChar(aErro[01]) + '], '
-		cMessage += "Id do campo de origem: "      + ' [' + cValToChar(aErro[02]) + '], '
-		cMessage += "Id do formulário de erro: "   + ' [' + cValToChar(aErro[03]) + '], '
-		cMessage += "Id do campo de erro: "        + ' [' + cValToChar(aErro[04]) + '], '
-		cMessage += "Id do erro: "                 + ' [' + cValToChar(aErro[05]) + '], '
-		cMessage += "Mensagem do erro: "           + ' [' + cValToChar(aErro[06]) + '], '
-		cMessage += "Mensagem da solução: "        + ' [' + cValToChar(aErro[07]) + '], '
-		cMessage += "Valor atribuído: "            + ' [' + cValToChar(aErro[08]) + '], '
-		cMessage += "Valor anterior: "             + ' [' + cValToChar(aErro[09]) + ']'
-		
-		//Mostra mensagem de erro
-		lRet := .F.
-		ConOut("Erro: " + cMessage)
+		cMessage := 'Id do formulário de origem:' + cValToChar(aErro[01]) + CRLF
+		cMessage += 'Id do campo de origem: '     + cValToChar(aErro[02]) + CRLF
+		cMessage += 'Id do formulário de erro: '  + cValToChar(aErro[03]) + CRLF
+		cMessage += 'Id do campo de erro: '       + cValToChar(aErro[04]) + CRLF
+		cMessage += 'Id do erro: '                + cValToChar(aErro[05]) + CRLF + CRLF
+		cMessage += 'Mensagem do erro: '          + CRLF
+		cMessage += cValToChar(aErro[06])         + CRLF + CRLF
+		cMessage += 'Mensagem da solução: '       + CRLF
+		cMessage += cValToChar(aErro[07])         + CRLF
+		//cMessage += 'Valor atribuído: '           + cValToChar(aErro[08]) + CRLF
+		//cMessage += 'Valor anterior: '            + cValToChar(aErro[09]) 
+
+		For nI := 1 to Len(aDadosZZ3)
+			ZZ3->(reclock('ZZ3',.T.))
+			ZZ3->ZZ3_FILIAL := xFilial('ZZ3')
+			ZZ3->ZZ3_ID     := cID
+			ZZ3->ZZ3_LINHA  := StrZero(nLinha += 1,6)
+			ZZ3->ZZ3_DATA   := dDatabase
+			ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
+			ZZ3->ZZ3_TIPO   := '1'
+			ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
+			ZZ3->ZZ3_ERRO   := cMessage
+			ZZ3->ZZ3_STATUS := '2'
+			ZZ3->(MsUnlock())
+		Next nI 
+
+		//RollBackSX8()
+		ConfirmSX8()
+		lRet := .F.	
+		nProcErr += 1
 	Else
 		lRet := .T.
 		ConOut("Produto incluido!")
@@ -175,15 +223,17 @@ While !FT_FEOF()
 
 	FT_FSkip()	
 
-	IncProc('Linha atual: '+Alltrim(Str(nLinha += 1))+' de '+Alltrim(Str(nLinhas)))
+//	IncProc('Linha atual: '+Alltrim(Str(nLinha += 1))+' de '+Alltrim(Str(nLinhas)))
+	IncProc('Linha atual: '+Alltrim(Str(nLinha))+' de '+Alltrim(Str(nLinhas)))
 
 EndDo
 
 FT_FUse()
 
 MsgInfo('Arquivo ' + Alltrim(cNomeArq) + ' importado.' + CRLF + CRLF +;
-        'Registros lidos'+Space(6)+': ' + Transform(nLinhas,'@E 999,999') + CRLF +;
-		'Registros processados: ' + Transform(nProc,'@E 999,999'))
+        'Registros lidos      : ' + Transform(nLinhas,'@E 999,999') + CRLF +;
+		'Registros processados: ' + Transform(nProc,'@E 999,999') + CRLF +;
+		'Registros com erros  : ' + Transform(nProcErr,'@E 999,999'))
 
 Return Nil
 
@@ -200,9 +250,10 @@ Return Nil
 Static Function AlteraProd()
                                   
 Local cString := FT_FReadln()
-Local nLinha  := 1
+Local nLinha  := 0
 Local aInfo   := {}
 Local nProc   := 0	// Produtos atualizados
+Local nProcErr := 0 // Registros com erros
 Local oModel  := FWLoadModel("MATA010")
 //Local oSB1Mod := oModel:GetModel("SB1MASTER")
 Local aCabec  := {}
@@ -227,6 +278,7 @@ While !FT_FEOF()
 	aDadosZZ3 := {}
 	cString   := FT_FReadln()
 	aInfo     := StrTokArr(cString,';')
+	nLinha += 1
 
 	For nI := 1 to Len(aInfo)
 		If TamSx3(aCabec[nI])[3] = 'D'
@@ -257,52 +309,77 @@ While !FT_FEOF()
 			ZZ3->(reclock('ZZ3',.T.))
 			ZZ3->ZZ3_FILIAL := xFilial('ZZ3')
 			ZZ3->ZZ3_ID     := cID
+			ZZ3->ZZ3_LINHA  := StrZero(nLinha,6)
 			ZZ3->ZZ3_DATA   := dDatabase
 			ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
 			ZZ3->ZZ3_TIPO   := '2'
 			ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
-			ZZ3->ZZ3_CAMPO  := GetSx3Cache(aDadosZZ3[nI,2], 'X3_TITULO')
+			ZZ3->ZZ3_CAMPO  := aDadosZZ3[nI,2]
+			ZZ3->ZZ3_TITULO := GetSx3Cache(aDadosZZ3[nI,2], 'X3_TITULO')
 			ZZ3->ZZ3_ANT    := Alltrim(aDadosZZ3[nI,3])
 			ZZ3->ZZ3_DEP    := Alltrim(aDadosZZ3[nI,4])
+			ZZ3->ZZ3_STATUS := '1'
 			ZZ3->(MsUnlock())
 		Next nI  
 		ConfirmSX8()
 		lOk := .T.
 	Else
-		RollBackSX8()
+		//RollBackSX8()
+		//ConfirmSX8()
 		lOk := .F.
 	EndIf
 	
 	//Se não deu certo a inclusão, mostra a mensagem de erro
 	If ! lOk
+		
+		cMessage := ''
 		//Busca o Erro do Modelo de Dados
 		aErro := oModel:GetErrorMessage()
 		
 		//Monta o Texto que será mostrado na tela
-		cMessage := "Id do formulário de origem:"  + ' [' + cValToChar(aErro[01]) + '], '
-		cMessage += "Id do campo de origem: "      + ' [' + cValToChar(aErro[02]) + '], '
-		cMessage += "Id do formulário de erro: "   + ' [' + cValToChar(aErro[03]) + '], '
-		cMessage += "Id do campo de erro: "        + ' [' + cValToChar(aErro[04]) + '], '
-		cMessage += "Id do erro: "                 + ' [' + cValToChar(aErro[05]) + '], '
-		cMessage += "Mensagem do erro: "           + ' [' + cValToChar(aErro[06]) + '], '
-		cMessage += "Mensagem da solução: "        + ' [' + cValToChar(aErro[07]) + '], '
-		cMessage += "Valor atribuído: "            + ' [' + cValToChar(aErro[08]) + '], '
-		cMessage += "Valor anterior: "             + ' [' + cValToChar(aErro[09]) + ']'
-		
-		//Mostra mensagem de erro
-		lRet := .F.
-		ConOut("Erro: " + cMessage)
-		
+		cMessage := 'Id do formulário de origem:' + cValToChar(aErro[01]) + CRLF
+		cMessage += 'Id do campo de origem: '     + cValToChar(aErro[02]) + CRLF
+		cMessage += 'Id do formulário de erro: '  + cValToChar(aErro[03]) + CRLF
+		cMessage += 'Id do campo de erro: '       + cValToChar(aErro[04]) + CRLF
+		cMessage += 'Id do erro: '                + cValToChar(aErro[05]) + CRLF + CRLF
+		cMessage += 'Mensagem do erro: '          + CRLF
+		cMessage += cValToChar(aErro[06])         + CRLF + CRLF
+		cMessage += 'Mensagem da solução: '       + CRLF
+		cMessage += cValToChar(aErro[07])         + CRLF
+		//cMessage += 'Valor atribuído: '           + cValToChar(aErro[08]) + CRLF
+		//cMessage += 'Valor anterior: '            + cValToChar(aErro[09]) 
+
+		For nI := 1 to Len(aDadosZZ3)
+			ZZ3->(reclock('ZZ3',.T.))
+			ZZ3->ZZ3_FILIAL := xFilial('ZZ3')
+			ZZ3->ZZ3_ID     := cID
+			ZZ3->ZZ3_LINHA  := StrZero(nLinha,6)
+			ZZ3->ZZ3_DATA   := dDatabase
+			ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
+			ZZ3->ZZ3_TIPO   := '2'
+			ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
+			ZZ3->ZZ3_ERRO   := cMessage
+			ZZ3->ZZ3_STATUS := '2'
+			ZZ3->(MsUnlock())
+		Next nI 
+
+		//RollBackSX8()
+		ConfirmSX8()
+		lRet := .F.	
+
+		nProcErr += 1
+
 	Else
 		lRet := .T.
-		ConOut("Produto excluido")
+		ConOut("Produto alterado")
 	EndIf
 	
 	nProc += 1
 
 	FT_FSkip()	
 
-	IncProc('Linha atual: '+Alltrim(Str(nLinha += 1))+' de '+Alltrim(Str(nLinhas)))
+//	IncProc('Linha atual: '+Alltrim(Str(nLinha += 1))+' de '+Alltrim(Str(nLinhas)))
+	IncProc('Linha atual: '+Alltrim(Str(nLinha))+' de '+Alltrim(Str(nLinhas)))
 
 EndDo
 
@@ -312,8 +389,9 @@ oModel:DeActivate()
 FT_FUse()
 
 MsgInfo('Arquivo ' + Alltrim(cNomeArq) + ' importado.' + CRLF + CRLF +;
-        'Registros lidos'+Space(6)+': ' + Transform(nLinhas,'@E 999,999') + CRLF +;
-		'Registros processados: ' + Transform(nProc,'@E 999,999'))
+        'Registros lidos      : ' + Transform(nLinhas,'@E 999,999') + CRLF +;
+		'Registros processados: ' + Transform(nProc,'@E 999,999') + CRLF +;
+		'Registros com erros  : ' + Transform(nProcErr,'@E 999,999'))
 
 Return Nil
 
