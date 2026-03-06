@@ -86,7 +86,6 @@ Local nProc    := 0	// Registros atualizados
 Local nProcErr := 0	// Registros com erros
 Local oModel   := FWLoadModel("MATA010") 
 Local oSB1Mod  := oModel:GetModel("SB1MASTER")
-//Local oSB5Mod := oModel:GetModel("SB5DETAIL")
 Local nI := 0
 Local lOK := .T.
 Local cID := GetSXeNum('ZZ3', 'ZZ3_ID')
@@ -110,20 +109,16 @@ While !FT_FEOF()
 
 	For nI :=1 to Len(aInfo)
 		//Setando os campos
-		If TamSx3(aCabec[nI])[3] = 'D'
-			oSB1Mod:SetValue(aCabec[nI], Ctod(aInfo[nI])) 
-		ElseIf TamSx3(aCabec[nI])[3] = 'N'
-			oSB1Mod:SetValue(aCabec[nI], Val(aInfo[nI])) 
+		If TamSx3(Alltrim(aCabec[nI]))[3] = 'D'
+			oSB1Mod:SetValue(Alltrim(aCabec[nI]), Ctod(aInfo[nI])) 
+		ElseIf TamSx3(Alltrim(aCabec[nI]))[3] = 'N'
+			oSB1Mod:SetValue(Alltrim(aCabec[nI]), Val(aInfo[nI])) 
 		Else 
-			oSB1Mod:SetValue(aCabec[nI], aInfo[nI]) 
+			oSB1Mod:SetValue(Alltrim(aCabec[nI]), aInfo[nI]) 
 		Endif 	
 	Next nI 
 
 	aAdd(aDadosZZ3, {aInfo[1]})
-
-	//If oSB5Mod != Nil
-		//oSB5Mod:SetValue("B5_CEME"   , cCEME     )
-	//EndIf
 	
 	//Se conseguir validar as informações
 	If oModel:VldData()
@@ -164,7 +159,6 @@ While !FT_FEOF()
 				ZZ3->(MsUnlock())
 			Next nI 
 
-			//RollBackSX8()
 			ConfirmSX8()
 			lOk := .F.	
 		EndIf
@@ -190,8 +184,6 @@ While !FT_FEOF()
 		cMessage += cValToChar(aErro[06])         + CRLF + CRLF
 		cMessage += 'Mensagem da solução: '       + CRLF
 		cMessage += cValToChar(aErro[07])         + CRLF
-		//cMessage += 'Valor atribuído: '           + cValToChar(aErro[08]) + CRLF
-		//cMessage += 'Valor anterior: '            + cValToChar(aErro[09]) 
 
 		For nI := 1 to Len(aDadosZZ3)
 			ZZ3->(reclock('ZZ3',.T.))
@@ -207,7 +199,6 @@ While !FT_FEOF()
 			ZZ3->(MsUnlock())
 		Next nI 
 
-		//RollBackSX8()
 		ConfirmSX8()
 		lRet := .F.	
 		nProcErr += 1
@@ -223,7 +214,6 @@ While !FT_FEOF()
 
 	FT_FSkip()	
 
-//	IncProc('Linha atual: '+Alltrim(Str(nLinha += 1))+' de '+Alltrim(Str(nLinhas)))
 	IncProc('Linha atual: '+Alltrim(Str(nLinha))+' de '+Alltrim(Str(nLinhas)))
 
 EndDo
@@ -231,9 +221,9 @@ EndDo
 FT_FUse()
 
 MsgInfo('Arquivo ' + Alltrim(cNomeArq) + ' importado.' + CRLF + CRLF +;
-        'Registros lidos      : ' + Transform(nLinhas,'@E 999,999') + CRLF +;
+        'Registros lidos'+Space(6)+': ' + Transform(nLinhas,'@E 999,999') + CRLF +;
 		'Registros processados: ' + Transform(nProc,'@E 999,999') + CRLF +;
-		'Registros com erros  : ' + Transform(nProcErr,'@E 999,999'))
+		'Registros com erros'+Space(2)+': ' + Transform(nProcErr,'@E 999,999'))
 
 Return Nil
 
@@ -255,7 +245,6 @@ Local aInfo   := {}
 Local nProc   := 0	// Produtos atualizados
 Local nProcErr := 0 // Registros com erros
 Local oModel  := FWLoadModel("MATA010")
-//Local oSB1Mod := oModel:GetModel("SB1MASTER")
 Local aCabec  := {}
 Local aFields := {}
 Local aDadosZZ3 := {}
@@ -281,26 +270,24 @@ While !FT_FEOF()
 	nLinha += 1
 
 	For nI := 1 to Len(aInfo)
-		If TamSx3(aCabec[nI])[3] = 'D'
-			aAdd(aFields, {aCabec[nI], Ctod(aInfo[nI]), Nil}) 
-		ElseIf TamSx3(aCabec[nI])[3] = 'N'
-			aAdd(aFields, {aCabec[nI], Val(aInfo[nI]), Nil}) 
+		If TamSx3(Alltrim(aCabec[nI]))[3] = 'D'
+			aAdd(aFields, {Alltrim(aCabec[nI]), Ctod(aInfo[nI]), Nil}) 
+		ElseIf TamSx3(Alltrim(aCabec[nI]))[3] = 'N'
+			aAdd(aFields, {Alltrim(aCabec[nI]), Val(aInfo[nI]), Nil}) 
 		Else 
-			aAdd(aFields, {aCabec[nI], aInfo[nI], Nil}) 
+			aAdd(aFields, {Alltrim(aCabec[nI]), aInfo[nI], Nil}) 
 		Endif 	
-		//aAdd(aFields,   {aCabec[nI], aInfo[nI], Nil})
+
 		If nI > 1 // Pula o código do produto
-			If TamSx3(aCabec[nI])[3] = 'D'
-				aAdd(aDadosZZ3, {aInfo[1], aCabec[nI], Dtoc(Posicione('SB1',1,xFilial('SB1')+aInfo[1], aCabec[nI])), aInfo[nI]})
-			ElseIf TamSx3(aCabec[nI])[3] = 'N'
-				aAdd(aDadosZZ3, {aInfo[1], aCabec[nI], Str(Posicione('SB1',1,xFilial('SB1')+aInfo[1], aCabec[nI])), aInfo[nI]})
+			If TamSx3(Alltrim(aCabec[nI]))[3] = 'D'
+				aAdd(aDadosZZ3, {aInfo[1], Alltrim(aCabec[nI]), Dtoc(Posicione('SB1',1,xFilial('SB1')+aInfo[1], Alltrim(aCabec[nI]))), aInfo[nI]})
+			ElseIf TamSx3(Alltrim(aCabec[nI]))[3] = 'N'
+				aAdd(aDadosZZ3, {aInfo[1], Alltrim(aCabec[nI]), Str(Posicione('SB1',1,xFilial('SB1')+aInfo[1], Alltrim(aCabec[nI]))), aInfo[nI]})
 			Else
-				aAdd(aDadosZZ3, {aInfo[1], aCabec[nI], Posicione('SB1',1,xFilial('SB1')+aInfo[1], aCabec[nI]), aInfo[nI]})
+				aAdd(aDadosZZ3, {aInfo[1], Alltrim(aCabec[nI]), Posicione('SB1',1,xFilial('SB1')+aInfo[1], Alltrim(aCabec[nI])), aInfo[nI]})
 			Endif
 		Endif
 	Next nI
-	
-	//cMusica := oSB1Mod:GetValue('B1_COD') 
 
 	//Se conseguir executar a operação automática
 	If FWMVCRotAuto(oModel, "SB1", 4, {{"SB1MASTER", aFields}} ,,.T.)
@@ -324,8 +311,6 @@ While !FT_FEOF()
 		ConfirmSX8()
 		lOk := .T.
 	Else
-		//RollBackSX8()
-		//ConfirmSX8()
 		lOk := .F.
 	EndIf
 	
@@ -346,8 +331,6 @@ While !FT_FEOF()
 		cMessage += cValToChar(aErro[06])         + CRLF + CRLF
 		cMessage += 'Mensagem da solução: '       + CRLF
 		cMessage += cValToChar(aErro[07])         + CRLF
-		//cMessage += 'Valor atribuído: '           + cValToChar(aErro[08]) + CRLF
-		//cMessage += 'Valor anterior: '            + cValToChar(aErro[09]) 
 
 		For nI := 1 to Len(aDadosZZ3)
 			ZZ3->(reclock('ZZ3',.T.))
@@ -363,7 +346,6 @@ While !FT_FEOF()
 			ZZ3->(MsUnlock())
 		Next nI 
 
-		//RollBackSX8()
 		ConfirmSX8()
 		lRet := .F.	
 
@@ -378,7 +360,6 @@ While !FT_FEOF()
 
 	FT_FSkip()	
 
-//	IncProc('Linha atual: '+Alltrim(Str(nLinha += 1))+' de '+Alltrim(Str(nLinhas)))
 	IncProc('Linha atual: '+Alltrim(Str(nLinha))+' de '+Alltrim(Str(nLinhas)))
 
 EndDo
@@ -389,9 +370,9 @@ oModel:DeActivate()
 FT_FUse()
 
 MsgInfo('Arquivo ' + Alltrim(cNomeArq) + ' importado.' + CRLF + CRLF +;
-        'Registros lidos      : ' + Transform(nLinhas,'@E 999,999') + CRLF +;
+        'Registros lidos'+Space(6)+': ' + Transform(nLinhas,'@E 999,999') + CRLF +;
 		'Registros processados: ' + Transform(nProc,'@E 999,999') + CRLF +;
-		'Registros com erros  : ' + Transform(nProcErr,'@E 999,999'))
+		'Registros com erros'+Space(2)+': ' + Transform(nProcErr,'@E 999,999'))
 
 Return Nil
 
