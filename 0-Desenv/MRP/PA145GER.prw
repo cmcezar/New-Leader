@@ -36,7 +36,7 @@ While (cAliasSC1)->(!Eof())
     If SC1->(DbSeek(xFilial('SC1') + (cAliasSc1)->C1_NUM + (cAliasSc1)->C1_ITEM))
         SC1->(recLock('SC1',.F.))
         SC1->C1_XNECMRP := SC1->C1_DATPRF
-        // Data da necessidade
+        // Altera a data da necessidade
         If Dow(DaySub(SC1->C1_DATPRF, nDiasAnt)) = 1      // Domingo = nDiasAnt-1 -> Segunda-feira
             SC1->C1_DATPRF  := DaySub(SC1->C1_DATPRF, nDiasAnt - 1)
         ElseIf Dow(DaySub(SC1->C1_DATPRF, nDiasAnt)) = 7  // Sábado = nDiasAnt+1 -> Sexta-feira
@@ -44,7 +44,7 @@ While (cAliasSC1)->(!Eof())
         Else
             SC1->C1_DATPRF  := DaySub(SC1->C1_DATPRF, nDiasAnt)
         Endif 
-        // Data do início de compras
+        // Altera a data do início de compras
         If Dow(DaySub(SC1->C1_DINICOM, nDiasAnt)) = 1      // Domingo = nDiasAnt-1 -> Segunda-feira
             SC1->C1_DINICOM := DaySub(SC1->C1_DINICOM, nDiasAnt - 1)
         ElseIf Dow(DaySub(SC1->C1_DINICOM, nDiasAnt)) = 7  // Sábado = nDiasAnt+1 -> Sexta-feira
@@ -52,11 +52,17 @@ While (cAliasSC1)->(!Eof())
         Else
             SC1->C1_DINICOM := DaySub(SC1->C1_DINICOM, nDiasAnt)
         Endif         
+        // Informa o código e loja do fornecedor padrão do produto
+        SB1->(DbSetOrder(1))
+        If SB1->(DbSeek(xFilial('SB1') + SC1->C1_PRODUTO)) .And. !Empty(SB1->B1_XFORNPD) .And. !Empty(SB1->B1_XLFORPD)
+            SC1->C1_FORNECE := SB1->B1_XFORNPD
+            SC1->C1_LOJA    := SB1->B1_XLFORPD
+        Endif  
         SC1->(MsUnlock())
+
     Endif 
     (cAliasSC1)->(dbSkip())
 Enddo
 (cAliasSC1)->(dbCloseArea())
-//
 
 Return Nil 
