@@ -19,6 +19,7 @@ User Function P712EXEC()
     Local nTamPrd   := GetSx3Cache("B2_COD", "X3_TAMANHO")
     Local nTamLoc   := GetSx3Cache("B2_LOCAL", "X3_TAMANHO")
     Local cTicket   := PARAMIXB
+    Local cOrigem   := ''
      
     //Parâmetros de execução do MRP podem ser obtidos na tabela HW1
     HW1->(dbSeek(xFilial("HW1") + cTicket))
@@ -43,9 +44,29 @@ User Function P712EXEC()
     End
     */
 
+    /* Pré Setup MRP */
+    ZZ4->(DbGoTop())
+    If !ZZ4->(EOF())
+        cOrigem := ZZ4->ZZ4_ORIGEM
+    Endif 
+
+    /* Exclui produtos da tabela do MRP */ 
     DbSelectArea('HWA')
     HWA->(DbGoTop())
     While HWA->(!EoF())
+
+        /* Origem do produto */
+        If cOrigem <> 'A'   // Ambos
+            SB1->(DbSetOrder(1))
+            If SB1->(DbSeek(xFilial('SB1') + HWA->HWA_PROD)) .And. SB1->B1_ORIGEM <> cOrigem
+                If RecLock('HWA',.F.)
+                    HWA->(DbDelete())
+                    HWA->(MsUnlock())
+                EndIf
+            Endif 
+        Endif 
+
+        /* Entra no MRP */
         If HWA->HWA_MRP <> '1'
             If RecLock('HWA',.F.)
                 HWA->(DbDelete())
