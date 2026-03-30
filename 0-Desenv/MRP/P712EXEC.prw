@@ -14,12 +14,12 @@
 User Function P712EXEC()
     Local cEmpBusca := "01"
     Local cFilBusca := "01"
-    Local cLocal    := ""
-    Local cProd     := ""
-    Local nTamPrd   := GetSx3Cache("B2_COD", "X3_TAMANHO")
-    Local nTamLoc   := GetSx3Cache("B2_LOCAL", "X3_TAMANHO")
-    Local cTicket   := PARAMIXB
-    Local cOrigem   := ''
+    Local cLocal  := ""
+    Local cProd   := ""
+    Local nTamPrd := GetSx3Cache("B2_COD", "X3_TAMANHO")
+    Local nTamLoc := GetSx3Cache("B2_LOCAL", "X3_TAMANHO")
+    Local cTicket := PARAMIXB
+    Local cOrigem := ''
      
     //Parâmetros de execução do MRP podem ser obtidos na tabela HW1
     HW1->(dbSeek(xFilial("HW1") + cTicket))
@@ -47,7 +47,15 @@ User Function P712EXEC()
     /* Pré Setup MRP */
     ZZ4->(DbGoTop())
     If !ZZ4->(EOF())
-        cOrigem := ZZ4->ZZ4_ORIGEM
+        cOrigem := IIF(ZZ4->ZZ4_ORIG0 <> 'S', '', '0')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG1 <> 'S', '', '1')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG2 <> 'S', '', '2')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG3 <> 'S', '', '3')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG4 <> 'S', '', '4')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG5 <> 'S', '', '5')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG6 <> 'S', '', '6')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG7 <> 'S', '', '7')
+        cOrigem += IIF(ZZ4->ZZ4_ORIG8 <> 'S', '', '8')
     Endif 
 
     /* Exclui produtos da tabela do MRP */ 
@@ -56,9 +64,9 @@ User Function P712EXEC()
     While HWA->(!EoF())
 
         /* Origem do produto */
-        If cOrigem <> 'A'   // Ambos
+        If !Empty(cOrigem)
             SB1->(DbSetOrder(1))
-            If SB1->(DbSeek(xFilial('SB1') + HWA->HWA_PROD)) .And. SB1->B1_ORIGEM <> cOrigem
+            If SB1->(DbSeek(xFilial('SB1') + HWA->HWA_PROD)) .And. !SB1->B1_ORIGEM $ cOrigem
                 If RecLock('HWA',.F.)
                     HWA->(DbDelete())
                     HWA->(MsUnlock())
