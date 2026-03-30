@@ -70,6 +70,9 @@ User Function P712EXEC()
                 If RecLock('HWA',.F.)
                     HWA->(DbDelete())
                     HWA->(MsUnlock())
+                            
+                    HWA->(DbSkip())
+                    Loop
                 EndIf
             Endif 
         Endif 
@@ -81,6 +84,7 @@ User Function P712EXEC()
                 HWA->(MsUnlock())
             EndIf
         Endif
+        
         HWA->(DbSkip())
     Enddo
 
