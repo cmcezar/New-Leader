@@ -243,11 +243,11 @@ Local cString := FT_FReadln()
 Local nLinha  := 0
 Local aInfo   := {}
 Local nProc   := 0	// Produtos atualizados
-Local nProcErr := 0 // Registros com erros
 Local oModel  := FWLoadModel("MATA010")
 Local aCabec  := {}
 Local aFields := {}
 Local aDadosZZ3 := {}
+Local nProcErr  := 0 // Registros com erros
 Local nI := 0
 Local lOK := .T.
 Local cID := GetSXeNum('ZZ3', 'ZZ3_ID')
@@ -270,14 +270,18 @@ While !FT_FEOF()
 	nLinha += 1
 
 	For nI := 1 to Len(aInfo)
-		If TamSx3(Alltrim(aCabec[nI]))[3] = 'D'
-			aAdd(aFields, {Alltrim(aCabec[nI]), Ctod(aInfo[nI]), Nil}) 
-		ElseIf TamSx3(Alltrim(aCabec[nI]))[3] = 'N'
-			aAdd(aFields, {Alltrim(aCabec[nI]), Val(aInfo[nI]), Nil}) 
-		Else 
-			aAdd(aFields, {Alltrim(aCabec[nI]), aInfo[nI], Nil}) 
-		Endif 	
-
+		// Monta o modelo de dados
+		If Alltrim(aInfo[nI]) <> 'NA'
+			If TamSx3(Alltrim(aCabec[nI]))[3] = 'D'
+				aAdd(aFields, {Alltrim(aCabec[nI]), Ctod(aInfo[nI]), Nil}) 
+			ElseIf TamSx3(Alltrim(aCabec[nI]))[3] = 'N'
+				aAdd(aFields, {Alltrim(aCabec[nI]), Val(aInfo[nI]), Nil}) 
+			Else 
+				aAdd(aFields, {Alltrim(aCabec[nI]), aInfo[nI], Nil}) 
+			Endif 	
+		Endif 
+		
+		// Log de alterações
 		If nI > 1 // Pula o código do produto
 			If TamSx3(Alltrim(aCabec[nI]))[3] = 'D'
 				aAdd(aDadosZZ3, {aInfo[1], Alltrim(aCabec[nI]), Dtoc(Posicione('SB1',1,xFilial('SB1')+aInfo[1], Alltrim(aCabec[nI]))), aInfo[nI]})
@@ -332,7 +336,7 @@ While !FT_FEOF()
 		cMessage += 'Mensagem da solução: '       + CRLF
 		cMessage += cValToChar(aErro[07])         + CRLF
 
-		For nI := 1 to Len(aDadosZZ3)
+		//For nI := 1 to Len(aDadosZZ3)
 			ZZ3->(reclock('ZZ3',.T.))
 			ZZ3->ZZ3_FILIAL := xFilial('ZZ3')
 			ZZ3->ZZ3_ID     := cID
@@ -340,11 +344,12 @@ While !FT_FEOF()
 			ZZ3->ZZ3_DATA   := dDatabase
 			ZZ3->ZZ3_USER   := Alltrim(USRRETNAME(RETCODUSR()))
 			ZZ3->ZZ3_TIPO   := '2'
-			ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
+			//ZZ3->ZZ3_CODPRO := aDadosZZ3[nI,1]
+			ZZ3->ZZ3_CODPRO := aDadosZZ3[1,1]
 			ZZ3->ZZ3_ERRO   := cMessage
 			ZZ3->ZZ3_STATUS := '2'
 			ZZ3->(MsUnlock())
-		Next nI 
+		//Next nI 
 
 		ConfirmSX8()
 		lRet := .F.	
