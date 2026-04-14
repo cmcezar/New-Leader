@@ -142,8 +142,8 @@ oView:AddField('VIEW_ZZ5',oStruZZ5,'ZZ5MASTER')
 oView:AddGrid('VIEW_ZZ6',oStruZZ6,'ZZ6DETAIL')
 
 // Setando o dimensionamento de tamanho
-oView:CreateHorizontalBox('CABEC',25)
-oView:CreateHorizontalBox('GRID',75)
+oView:CreateHorizontalBox('CABEC',35)
+oView:CreateHorizontalBox('GRID',65)
 
 // Amarrando a view com as box
 oView:SetOwnerView('VIEW_ZZ5','CABEC')

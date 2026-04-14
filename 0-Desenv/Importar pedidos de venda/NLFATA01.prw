@@ -83,7 +83,6 @@ If !FT_FEOF()
 	ZZ5->ZZ5_NOMARQ  := cNomeArq
 	ZZ5->ZZ5_DATA	 := dDatabase
 	ZZ5->ZZ5_CLIENT  := mv_par01
-	ZZ5->ZZ5_LOJA    := mv_par02
 	ZZ5->(MsUnlock())
 	ConfirmSX8()
 Endif 
@@ -135,9 +134,11 @@ Return Nil
 //----------------------------------------------\\
 Static Function GeraSC4()
 
-Local aDados := {}
-Local aLog   := {}
-Local cErro  := ''
+Local aDados   := {}
+Local aLog     := {}
+Local cErro    := ''
+Local cCliente := ''
+Local cLoja    := ''
 Local cAliasZZ6 := GetNextAlias()
 Local nI := 0
 
@@ -168,12 +169,23 @@ EndSQL
 
 While !(cAliasZZ6)->(EOF())
 
+	cCliente := ''
+	cLoja    := ''
+
+	SA1->(DbSetOrder(14))
+	If SA1->(DbSeek(xFilial('SA1') + (cAliasZZ6)->ZZ6_PLANTA))
+		cCliente := SA1->A1_COD
+		cLoja    := SA1->A1_LOJA
+	Endif 
+
 	aadd(aDados,{'C4_PRODUTO', (cAliasZZ6)->ZZ6_PNNWL , Nil})  
 	aadd(aDados,{'C4_DOC'    , cNomeArq               , Nil})  
 	aadd(aDados,{'C4_QUANT'  , (cAliasZZ6)->ZZ6_QTDENT, Nil})
 	aadd(aDados,{'C4_VALOR'  , (cAliasZZ6)->ZZ6_VALOR , Nil})
 	aadd(aDados,{'C4_DATA'   , (cAliasZZ6)->ZZ6_DATA  , Nil}) 
 	aadd(aDados,{'C4_LOCAL'  , Posicione('SB1',1,xFilial('SB1')+(cAliasZZ6)->ZZ6_PNNWL,'B1_LOCPAD'),Nil})
+	aadd(aDados,{'C4_XCLIENT', cCliente, Nil}) 
+	aadd(aDados,{'C4_XLOJA'  , cLoja   , Nil}) 
 
 	MATA700(aDados,3)
 		
