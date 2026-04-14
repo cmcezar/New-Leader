@@ -21,6 +21,8 @@ Local cPerg	   :=  PADR('NLFATA01', 10)
 Private cNomeArq :=	''  
 Private nPos     := 0
 Private nLinhas  := 0
+Private cCliente := ''
+Private cLoja    := ''
 
 If !Pergunte(cPerg, .T.)
     Return Nil
@@ -92,6 +94,15 @@ While !FT_FEOF()
 	//cString := FT_FReadln()
 	aString := StrTokArr(FT_FReadln(),';')
 
+	cCliente := ''
+	cLoja    := ''
+
+	SA1->(DbSetOrder(14))
+	If SA1->(DbSeek(xFilial('SA1') + Alltrim(aString[3])))
+		cCliente := SA1->A1_COD
+		cLoja    := SA1->A1_LOJA
+	Endif 
+
 	ZZ6->(reclock('ZZ6',.T.))
 	ZZ6->ZZ6_FILIAL := xFilial('ZZ6')
 	ZZ6->ZZ6_ID		:= cID
@@ -105,7 +116,7 @@ While !FT_FEOF()
 	ZZ6->ZZ6_QTDENT	:= Val(aString[7])
 	ZZ6->ZZ6_QTDANT	:= Val(aString[8])
 	ZZ6->ZZ6_PRCUNI	:= Val(aString[9])
-	ZZ6->ZZ6_PNNWL	:= Posicione('SA7',3,xFilial('SA7') + mv_par01 + mv_par02 + aString[6], 'A7_PRODUTO') // Amarração Produto x Cliente
+	ZZ6->ZZ6_PNNWL	:= Posicione('SA7',3,xFilial('SA7') + cCliente + cLoja + aString[6], 'A7_PRODUTO') // Amarração Produto x Cliente
 
 	cItem := Soma1(cItem)
 	ZZ6->(MsUnlock())
@@ -137,8 +148,6 @@ Static Function GeraSC4()
 Local aDados   := {}
 Local aLog     := {}
 Local cErro    := ''
-Local cCliente := ''
-Local cLoja    := ''
 Local cAliasZZ6 := GetNextAlias()
 Local nI := 0
 
