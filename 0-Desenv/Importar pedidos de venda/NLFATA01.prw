@@ -163,7 +163,7 @@ BeginSQL Alias cAliasZZ6
 
 	COLUMN ZZ6_DATA AS DATE
 
-	SELECT ZZ6_DATA, ZZ6_PLANTA, ZZ6_ORDCOM, ZZ6_ITCOM, ZZ6_PNCLI, ZZ6_QTDENT, ZZ6_PRCUNI, ZZ6_PNNWL, ROUND(ZZ6_QTDENT*ZZ6_PRCUNI,2) AS ZZ6_VALOR
+	SELECT ZZ6_ID, ZZ6_DATA, ZZ6_PLANTA, ZZ6_ORDCOM, ZZ6_ITCOM, ZZ6_PNCLI, ZZ6_QTDENT, ZZ6_PRCUNI, ZZ6_PNNWL, ROUND(ZZ6_QTDENT*ZZ6_PRCUNI,2) AS ZZ6_VALOR
 	FROM %Table:ZZ5% ZZ5 INNER JOIN %Table:ZZ6% ZZ6 ON
 			ZZ6_FILIAL = %xFilial:ZZ6%
 		AND ZZ6_ID     = ZZ5_ID
@@ -187,8 +187,9 @@ While !(cAliasZZ6)->(EOF())
 		cLoja    := SA1->A1_LOJA
 	Endif 
 
+	aadd(aDados,{'C4_XTIPO'  , '2' , Nil})  
 	aadd(aDados,{'C4_PRODUTO', (cAliasZZ6)->ZZ6_PNNWL , Nil})  
-	aadd(aDados,{'C4_DOC'    , cNomeArq               , Nil})  
+	aadd(aDados,{'C4_DOC'    , (cAliasZZ6)->ZZ6_ID    , Nil})  
 	aadd(aDados,{'C4_QUANT'  , (cAliasZZ6)->ZZ6_QTDENT, Nil})
 	aadd(aDados,{'C4_VALOR'  , (cAliasZZ6)->ZZ6_VALOR , Nil})
 	aadd(aDados,{'C4_DATA'   , (cAliasZZ6)->ZZ6_DATA  , Nil}) 

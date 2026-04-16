@@ -19,6 +19,7 @@ Local aArea   := GetArea()
 Local oBrowse
 
 Private oView := Nil
+Private cID   := Nil
 
 // Instânciando FWMBrowse - Somente com dicionário de dados
 oBrowse := FWMBrowse():New()
@@ -56,12 +57,12 @@ Static Function MenuDef()
 	Local aRot := {}
 	
 	// Adicionando opções
+	ADD OPTION aRot TITLE 'Importar'   ACTION 'u_NLFATA01'  OPERATION 6        ACCESS 0 //OPERATION 6
 	ADD OPTION aRot TITLE 'Visualizar' ACTION 'VIEWDEF.FATA002' OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
 	// ADD OPTION aRot TITLE 'Legenda'    ACTION 'u_zMVC01Leg'     OPERATION 6                      ACCESS 0 //OPERATION X
 //	ADD OPTION aRot TITLE 'Incluir'    ACTION 'VIEWDEF.FATA002' OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
 	// ADD OPTION aRot TITLE 'Alterar'    ACTION 'VIEWDEF.FATA002' OPERATION MODEL_OPERATION_UPDATE ACCESS 0 //OPERATION 4
-//	ADD OPTION aRot TITLE 'Excluir'    ACTION 'VIEWDEF.FATA002' OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
-	ADD OPTION aRot TITLE 'Importar'    ACTION 'u_NLFATA01'  OPERATION 6        ACCESS 0 //OPERATION 6
+	ADD OPTION aRot TITLE 'Excluir'    ACTION 'u_FATA002A' OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
 
 Return aRot
 
@@ -159,3 +160,83 @@ oView:SetViewProperty('VIEW_ZZ6', "GRIDFILTER",  {.T.})
 
 Return oView
 
+//-------------------------------------------------\\
+/*/{Protheus.doc} FATA002A
+// Excluir o arquivo importado
+@type function
+@author Claudio Macedo
+@since 16/04/2026
+@version 1.0
+/*/
+//-------------------------------------------------\\
+User Function FATA002A()
+
+If MsgYesNo('Deseja excluir o arquivo importado ?')
+	Processa( {|| ExcluiArq() }, 'Arquivo: ' + Alltrim(ZZ5->ZZ5_ID), 'Excluindo o arquivo ...', .F.)
+	MsgInfo('Arquivo excluído !')
+
+	Processa( {|| ExcluiSC4() }, 'Arquivo: ' + Alltrim(ZZ5->ZZ5_ID), 'Excluindo as previsões de venda ...', .F.)
+	MsgInfo('Previsões de venda excluídas !')
+
+Endif 
+
+Return Nil 
+
+//-------------------------------------------------\\
+/*/{Protheus.doc} ExcluiArq
+// Excluir o arquivo importado
+@type function
+@author Claudio Macedo
+@since 16/04/2026
+@version 1.0
+/*/
+//-------------------------------------------------\\
+Static Function ExcluiArq()
+
+cID := ZZ5->ZZ5_ID 
+
+/* Excluindo o cabeçalho do arquivo */
+ZZ5->(reclock('ZZ5',.F.))
+ZZ5->(DbDelete())
+ZZ5->(MsUnlock())
+
+/* Excluindo os itens do arquivo */
+ZZ6->(DbSetOrder(1))
+ZZ6->(DbSeek(xFilial('ZZ6') + cID))
+
+While !ZZ6->(EOF()) .AND. ZZ6->ZZ6_ID = cID
+
+	ZZ6->(reclock('ZZ6',.F.))
+	ZZ6->(DbDelete())
+	ZZ6->(MsUnlock())
+
+	ZZ6->(DbSkip())
+Enddo 
+
+Return Nil 
+
+//-------------------------------------------------\\
+/*/{Protheus.doc} ExcluiSC4
+// Excluir as previsões de venda
+@type function
+@author Claudio Macedo
+@since 16/04/2026
+@version 1.0
+/*/
+//-------------------------------------------------\\
+Static Function ExcluiSC4()
+
+/* Excluindo as previsões de venda */
+SC4->(DbSetOrder(3))
+SC4->(DbSeek(xFilial('SC4') + cID))
+
+While !SC4->(EOF()) .AND. SC4->C4_DOC = cID 
+
+	SC4->(reclock('SC4',.F.))
+	SC4->(DbDelete())
+	SC4->(MsUnlock())
+
+	SC4->(DbSkip())
+Enddo 
+
+Return Nil 
