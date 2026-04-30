@@ -31,7 +31,7 @@ Endif
 nPos :=	Aviso('Importação de Previsão e Pedido de Venda','Esta rotina tem como objetivo importar'+CRLF+' previsões e pedidos de venda.',{'Importar','Sair'}, 3)
 
 If nPos = 1                 
-	cArquivo :=	cGetFile( 'Previsão e Pedido de Venda |*.txt|' , 'Selecione o arquivo', 1, 'C:\', .T., GETF_LOCALFLOPPY + GETF_LOCALHARD )
+	cArquivo :=	cGetFile( 'Arquivos csv |*.csv|' , 'Selecione o arquivo', 1, 'C:\', .T., GETF_LOCALFLOPPY + GETF_LOCALHARD )
 	
 	If !Empty(cArquivo)
 		cPath	 :=	Substring(cArquivo,0,RAT('\',cArquivo))
@@ -54,7 +54,8 @@ If nPos = 1
 		ProcRegua(nLinhas)
 	
 		Processa( {|| ImportaTxt() }, 'Processando arquivo ' + cNomeArq, 'Importando previsão e pedido de venda ...', .F.)
-		Processa( {|| GeraSC4() }, 'Previsão de Venda', 'Incluindo as previsões de venda ...', .F.)
+		Processa( {|| GeraSC4() }   , 'Previsão de Venda', 'Incluindo as previsões de venda ...', .F.)
+		Processa( {|| GeraSC5() }   , 'Pedido de Venda', 'Incluindo os pedidos de venda ...', .F.)
 				
 	Endif
 Endif
@@ -187,7 +188,7 @@ While !(cAliasZZ6)->(EOF())
 		cLoja    := SA1->A1_LOJA
 	Endif 
 
-	aadd(aDados,{'C4_XTIPO'  , '2' , Nil})  
+	aadd(aDados,{'C4_XTIPINC', '2' , Nil})  
 	aadd(aDados,{'C4_PRODUTO', (cAliasZZ6)->ZZ6_PNNWL , Nil})  
 	aadd(aDados,{'C4_DOC'    , (cAliasZZ6)->ZZ6_ID    , Nil})  
 	aadd(aDados,{'C4_QUANT'  , (cAliasZZ6)->ZZ6_QTDENT, Nil})
@@ -202,10 +203,139 @@ While !(cAliasZZ6)->(EOF())
 	If lMsErroAuto
 		aLog := GetAutoGRLog() 	/* Função que retorna as informações de erro ocorridos durante o processo da rotina automática */			                                 				
 		For nI := 1 to Len(aLog)
-			cErro =+ aLog[nI] + CRLF
+			cErro += aLog[nI] + CRLF
 		Next
 		Alert(cErro)
 	EndIf
+
+	(cAliasZZ6)->(DbSkip())
+
+Enddo 
+
+(cAliasZZ6)->(DbCloseArea())
+
+Return Nil 
+
+//----------------------------------------------\\
+/*/{Protheus.doc} GeraSC5
+// Incluindo os pedidos de venda
+@author Claudio Macedo
+@since 21/04/2026
+@version 1.0
+@return Nil
+@type Function
+/*/
+//----------------------------------------------\\
+Static Function GeraSC5()
+
+Local aLog     := {}
+Local aCabec   := {}
+Local aItem    := {}
+Local aItens   := {}
+Local cErro    := ''
+Local nRegs    := 0
+Local cAliasREG := GetNextAlias()
+Local cAliasZZ6 := GetNextAlias()
+Local nI := 0
+
+
+Private lMsErroAuto    := .F.    /* Variável de controle interno da rotina automatica que informa se houve erro durante o processamento */
+
+Private lMsHelpAuto	   := .T.    /* Variável que define que o help deve ser gravado no arquivo de log e que as informações estão vindo à 
+                                    partir da rotina automática */
+
+Private lAutoErrNoFile := .T.    /* Força a gravação das informações de erro em array para manipulação da gravação ao invés de gravar
+                                    direto no arquivo temporário */
+
+BeginSQL Alias cAliasREG
+		
+	SELECT Count(*) AS Registros
+	FROM %Table:ZZ5% ZZ5 INNER JOIN %Table:ZZ6% ZZ6 ON
+			ZZ6_FILIAL = %xFilial:ZZ6%
+		AND ZZ6_ID     = ZZ5_ID
+		AND ZZ6_TIPO   = '2'
+		AND ZZ6.%notdel%
+	WHERE ZZ5_FILIAL = %xFilial:ZZ5%
+		AND ZZ5_NOMARQ = %Exp:cNomeArq%
+		AND ZZ5.%notdel%
+				
+EndSQL
+
+(cAliasREG)->(dbGoTop())
+
+nRegs := (cAliasREG)->Registros
+
+ProcRegua(nRegs)
+
+(cAliasREG)->(DbCloseArea())
+
+BeginSQL Alias cAliasZZ6
+
+	COLUMN ZZ6_DATA AS DATE
+
+	SELECT ZZ6_ID, ZZ6_DATA, ZZ6_PLANTA, ZZ6_ORDCOM, ZZ6_ITCOM, ZZ6_PNCLI, ZZ6_QTDENT, ZZ6_PRCUNI, ZZ6_PNNWL
+	FROM %Table:ZZ5% ZZ5 INNER JOIN %Table:ZZ6% ZZ6 ON
+			ZZ6_FILIAL = %xFilial:ZZ6%
+		AND ZZ6_ID     = ZZ5_ID
+		AND ZZ6_TIPO   = '2'
+		AND ZZ6.%notdel%
+	WHERE ZZ5_FILIAL = %xFilial:ZZ5%
+		AND ZZ5_NOMARQ = %Exp:cNomeArq%
+		AND ZZ5.%notdel%
+EndSQL
+
+(cAliasZZ6)->(DbGoTop())
+
+
+While !(cAliasZZ6)->(EOF())
+
+	cCliente := ''
+	cLoja    := ''
+
+	SA1->(DbSetOrder(14))
+	If SA1->(DbSeek(xFilial('SA1') + (cAliasZZ6)->ZZ6_PLANTA))
+		cCliente := SA1->A1_COD
+		cLoja    := SA1->A1_LOJA
+	Endif 
+
+	cTES := '5A8' //Posicione("SA1",1,xFilial("SA1")+cCliente+cLoja,"A1_XTES")
+
+	AAdd(aCabec, {"C5_FILIAL" , xFilial("SC5"), Nil})
+	AAdd(aCabec, {"C5_TIPO"   , "N"		, Nil})
+	AAdd(aCabec, {"C5_CLIENTE", cCliente, Nil})
+	AAdd(aCabec, {"C5_LOJACLI", cLoja	, Nil})
+	AAdd(aCabec, {"C5_TPFRETE", "F"	    , Nil})
+	AAdd(aCabec, {"C5_XTIPINC", "2"	    , Nil})
+	AAdd(aCabec, {"C5_XORDCOM", (cAliasZZ6)->ZZ6_ORDCOM, Nil})
+	AAdd(aCabec, {"C5_XITCOM" , (cAliasZZ6)->ZZ6_ITCOM , Nil})
+	AAdd(aCabec, {"C5_XIDEDI" , (cAliasZZ6)->ZZ6_ID , Nil})
+
+
+	aItem  := {}
+	aItens := {}
+			
+	AAdd( aItem , {"C6_FILIAL" , xFilial("SC6") , Nil})
+	AAdd( aItem , {"C6_ITEM"   , '01', Nil})
+	AAdd( aItem , {"C6_PRODUTO", (cAliasZZ6)->ZZ6_PNNWL , Nil})
+	AAdd( aItem , {"C6_QTDVEN" , (cAliasZZ6)->ZZ6_QTDENT, Nil})
+	AAdd( aItem , {"C6_PRCVEN" , (cAliasZZ6)->ZZ6_PRCUNI, Nil})
+	AAdd( aItem , {"C6_PEDCLI" , (cAliasZZ6)->ZZ6_ORDCOM, Nil})
+	AAdd( aItem , {"C6_TES"    , cTES, Nil})
+	AAdd( aItem , {"C6_ENTREG" , (cAliasZZ6)->ZZ6_DATA  , Nil})      
+	AAdd( aItens, aItem)
+
+	IncProc("Incluindo pedido de venda ...")
+
+	MSExecAuto({|x,y,z| MATA410(x,y,z)},aCabec,aItens,3)
+					
+	If lMsErroAuto
+		aLog := GetAutoGRLog() 	/* Função que retorna as informações de erro ocorridos durante o processo da rotina automática */			                                 				
+
+		For nI := 1 to Len(aLog)
+			cErro += aLog[nI] + CRLF
+		Next
+		Alert(cErro)
+	Endif
 
 	(cAliasZZ6)->(DbSkip())
 
