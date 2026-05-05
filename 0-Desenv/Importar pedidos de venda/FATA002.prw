@@ -262,17 +262,17 @@ Local aLinha := {}
 Private lMsErroAuto    := .F.
 Private lAutoErrNoFile := .F.
 
-/* Excluindo as previsões de venda */
+/* Excluindo os pedidos de venda */
 SC5->(DbSetOrder(12))
 SC5->(DbSeek(xFilial('SC5') + cID))
 
 While !SC5->(EOF()) .AND. SC5->C5_XIDEDI = cID 
 
-//	SC5->(reclock('SC5',.F.))
-//	SC5->(DbDelete())
-//	SC5->(MsUnlock())
+	SC5->(reclock('SC5',.F.))
+	SC5->(DbDelete())
+	SC5->(MsUnlock())
  
-   aadd(aCabec, {"C5_NUM"    , SC5->C5_NUM    , Nil})
+//   aadd(aCabec, {"C5_NUM"    , SC5->C5_NUM    , Nil})
 //   aadd(aCabec, {"C5_TIPO"   , SC5->C5_TIPO   , Nil})
 //   aadd(aCabec, {"C5_CLIENTE", SC5->C5_CLIENTE, Nil})
 //   aadd(aCabec, {"C5_LOJACLI", SC5->C5_LOJACLI, Nil})
@@ -284,27 +284,31 @@ While !SC5->(EOF()) .AND. SC5->C5_XIDEDI = cID
 
 	While !SC6->(EOF()) .And. SC6->C6_FILIAL = xFilial('SC6') .And. SC6->C6_NUM = SC5->C5_NUM
 
+		SC6->(reclock('SC6',.F.))
+		SC6->(DbDelete())
+		SC6->(MsUnlock())
+
 		//--- Informando os dados do item do Pedido de Venda
-		aLinha := {}
-		aadd(aLinha,{"C6_ITEM"   , SC6->C6_ITEM   , Nil})
-		aadd(aLinha,{"C6_PRODUTO", SC6->C6_PRODUTO, Nil})
-		aadd(aLinha,{"C6_QTDVEN" , SC6->C6_QTDVEN , Nil})
-		aadd(aLinha,{"C6_PRCVEN" , SC6->C6_PRCVEN , Nil})
-		aadd(aLinha,{"C6_PRUNIT" , SC6->C6_PRUNIT , Nil})
-		aadd(aLinha,{"C6_VALOR"  , SC6->C6_VALOR  , Nil})
-		aadd(aLinha,{"C6_TES"    , SC6->C6_TES    , Nil})
-		aadd(aItens, aLinha)
+//		aLinha := {}
+//		aadd(aLinha,{"C6_ITEM"   , SC6->C6_ITEM   , Nil})
+//		aadd(aLinha,{"C6_PRODUTO", SC6->C6_PRODUTO, Nil})
+//		aadd(aLinha,{"C6_QTDVEN" , SC6->C6_QTDVEN , Nil})
+//		aadd(aLinha,{"C6_PRCVEN" , SC6->C6_PRCVEN , Nil})
+//		aadd(aLinha,{"C6_PRUNIT" , SC6->C6_PRUNIT , Nil})
+//		aadd(aLinha,{"C6_VALOR"  , SC6->C6_VALOR  , Nil})
+//		aadd(aLinha,{"C6_TES"    , SC6->C6_TES    , Nil})
+//		aadd(aItens, aLinha)
 
 		SC6->(DbSkip())
 
 	Enddo 
  
-   MSExecAuto({|a, b, c| MATA410(a, b, c)}, aCabec, aItens, 5)
-   If !lMsErroAuto
-      Alert('Erro !')
-   Else
-      Alert('Excluído !')
-   EndIf
+//   MSExecAuto({|a, b, c| MATA410(a, b, c)}, aCabec, aItens, 5)
+//   If !lMsErroAuto
+//      Alert('Erro !')
+//   Else
+//      Alert('Excluído !')
+//   EndIf
 
 	SC5->(DbSkip())
 Enddo 

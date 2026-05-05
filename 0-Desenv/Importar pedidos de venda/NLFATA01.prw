@@ -195,12 +195,14 @@ While !(cAliasZZ6)->(EOF())
 	aadd(aDados,{'C4_VALOR'  , (cAliasZZ6)->ZZ6_VALOR , Nil})
 	aadd(aDados,{'C4_DATA'   , (cAliasZZ6)->ZZ6_DATA  , Nil}) 
 	aadd(aDados,{'C4_LOCAL'  , Posicione('SB1',1,xFilial('SB1')+(cAliasZZ6)->ZZ6_PNNWL,'B1_LOCPAD'),Nil})
-	aadd(aDados,{'C4_XCLIENT', cCliente, Nil}) 
-	aadd(aDados,{'C4_XLOJA'  , cLoja   , Nil}) 
+	aadd(aDados,{'C4_XCLIENT', cCliente , Nil}) 
+	aadd(aDados,{'C4_XLOJA'  , cLoja    , Nil}) 
+	aadd(aDados,{'C4_XDTIMP' , dDatabase, Nil}) 
 
 	MATA700(aDados,3)
 		
 	If lMsErroAuto
+		cErro := ''
 		aLog := GetAutoGRLog() 	/* Função que retorna as informações de erro ocorridos durante o processo da rotina automática */			                                 				
 		For nI := 1 to Len(aLog)
 			cErro += aLog[nI] + CRLF
@@ -298,7 +300,7 @@ While !(cAliasZZ6)->(EOF())
 		cLoja    := SA1->A1_LOJA
 	Endif 
 
-	cTES := '5A8' //Posicione("SA1",1,xFilial("SA1")+cCliente+cLoja,"A1_XTES")
+	cTES := Posicione('SA7',1,xFilial('SA7') + cCliente + cLoja + (cAliasZZ6)->ZZ6_PNNWL, 'A7_XTESPV') // Amarração Produto x Cliente
 
 	AAdd(aCabec, {"C5_FILIAL" , xFilial("SC5"), Nil})
 	AAdd(aCabec, {"C5_TIPO"   , "N"		, Nil})
@@ -310,27 +312,27 @@ While !(cAliasZZ6)->(EOF())
 	AAdd(aCabec, {"C5_XITCOM" , (cAliasZZ6)->ZZ6_ITCOM , Nil})
 	AAdd(aCabec, {"C5_XIDEDI" , (cAliasZZ6)->ZZ6_ID , Nil})
 
-
 	aItem  := {}
 	aItens := {}
 			
-	AAdd( aItem , {"C6_FILIAL" , xFilial("SC6") , Nil})
-	AAdd( aItem , {"C6_ITEM"   , '01', Nil})
-	AAdd( aItem , {"C6_PRODUTO", (cAliasZZ6)->ZZ6_PNNWL , Nil})
-	AAdd( aItem , {"C6_QTDVEN" , (cAliasZZ6)->ZZ6_QTDENT, Nil})
-	AAdd( aItem , {"C6_PRCVEN" , (cAliasZZ6)->ZZ6_PRCUNI, Nil})
-	AAdd( aItem , {"C6_PEDCLI" , (cAliasZZ6)->ZZ6_ORDCOM, Nil})
-	AAdd( aItem , {"C6_TES"    , cTES, Nil})
-	AAdd( aItem , {"C6_ENTREG" , (cAliasZZ6)->ZZ6_DATA  , Nil})      
-	AAdd( aItens, aItem)
+	AAdd(aItem, {"C6_FILIAL" , xFilial("SC6") , Nil})
+	AAdd(aItem, {"C6_ITEM"   , '01', Nil})
+	AAdd(aItem, {"C6_PRODUTO", (cAliasZZ6)->ZZ6_PNNWL , Nil})
+	AAdd(aItem, {"C6_QTDVEN" , (cAliasZZ6)->ZZ6_QTDENT, Nil})
+	AAdd(aItem, {"C6_PRCVEN" , (cAliasZZ6)->ZZ6_PRCUNI, Nil})
+	AAdd(aItem, {"C6_NUMPCOM", (cAliasZZ6)->ZZ6_ORDCOM, Nil})
+	AAdd(aItem, {"C6_ITEMPC" , (cAliasZZ6)->ZZ6_ITCOM , Nil})
+	AAdd(aItem, {"C6_TES"    , cTES, Nil})
+	AAdd(aItem, {"C6_ENTREG" , (cAliasZZ6)->ZZ6_DATA  , Nil})      
+	AAdd(aItens, aItem)
 
 	IncProc("Incluindo pedido de venda ...")
 
 	MSExecAuto({|x,y,z| MATA410(x,y,z)},aCabec,aItens,3)
 					
 	If lMsErroAuto
+		cErro := ''
 		aLog := GetAutoGRLog() 	/* Função que retorna as informações de erro ocorridos durante o processo da rotina automática */			                                 				
-
 		For nI := 1 to Len(aLog)
 			cErro += aLog[nI] + CRLF
 		Next
