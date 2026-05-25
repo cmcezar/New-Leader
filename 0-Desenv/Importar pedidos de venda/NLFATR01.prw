@@ -65,6 +65,7 @@ TRCell():New(oSection1, 'ZZ6_DATA'  , cAliasZZ6, 'Data Entrega'   , '@!'        
 TRCell():New(oSection1, 'ZZ6_QTDENT', cAliasZZ6, 'Qtd Entrega'    , '@E 999,999.999' , 11,,, 'RIGHT',,'RIGHT',,2,,,,.F.)          
 TRCell():New(oSection1, 'ZZ6_QTDANT', cAliasZZ6, 'Qtd Anterior'   , '@E 999,999.999' , 11,,, 'RIGHT',,'RIGHT',,2,,,,.F.)          
 TRCell():New(oSection1, 'ZZ6_PRCUNI', cAliasZZ6, 'Preço Unitário' , '@E 9,999,999.99', 12,,, 'RIGHT',,'RIGHT',,2,,,,.F.)          
+TRCell():New(oSection1, 'ZZ6_TOTAL' , cAliasZZ6, 'Valor Total'    , '@E 9,999,999.99', 12,,, 'RIGHT',,'RIGHT',,2,,,,.F.)          
 
 Return oReport
  
@@ -116,11 +117,11 @@ BeginSQL Alias cAliasZZ6
 	COLUMN ZZ6_DATA AS DATE
 
 	SELECT ZZ6_ID, ZZ5_DATA, ZZ6_TIPO, ZZ6_PLANTA, A1_NREDUZ, A1_MUN, 
-	ZZ6_PNNWL, B1_DESC, ZZ6_DATA, ZZ6_QTDENT, ZZ6_QTDANT, ZZ6_PRCUNI
+	ZZ6_PNNWL, B1_DESC, ZZ6_DATA, ZZ6_QTDENT, ZZ6_QTDANT, ZZ6_PRCUNI, ROUND(ZZ6_QTDENT*ZZ6_PRCUNI,2) ZZ6_TOTAL
 	FROM %Table:ZZ6% ZZ6 INNER JOIN %Table:SB1% SB1 ON
 	        B1_FILIAL = %xFilial:SB1%
 		AND B1_COD = ZZ6_PNNWL 
-		AND B1_TIPO IN ('PA','ME')
+		AND %Exp:cTipo%
 		AND SB1.%notdel% INNER JOIN %Table:SA1% SA1 ON
 			A1_FILIAL = %xFilial:SA1%
 		AND A1_XPLANTA = ZZ6_PLANTA
@@ -133,7 +134,6 @@ BeginSQL Alias cAliasZZ6
 		AND ZZ6_PNNWL BETWEEN %Exp:mv_par03% AND %Exp:mv_par04%
 		AND ZZ6_DATA BETWEEN %Exp:Dtos(mv_par05)% AND %Exp:Dtos(mv_par06)%
 		AND %Exp:cDoc%
-		AND %Exp:cTipo%
 		AND ZZ6.%notdel%
 
 EndSql 

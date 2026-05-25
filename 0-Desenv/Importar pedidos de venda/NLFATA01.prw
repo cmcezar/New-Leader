@@ -54,7 +54,9 @@ If nPos = 1
 		ProcRegua(nLinhas)
 	
 		Processa( {|| ImportaTxt() }, 'Processando arquivo ' + cNomeArq, 'Importando previsão e pedido de venda ...', .F.)
+		Processa( {|| ExcluiSC4() } , 'Previsão de Venda', 'Excluindo as previsões de venda ...', .F.)
 		Processa( {|| GeraSC4() }   , 'Previsão de Venda', 'Incluindo as previsões de venda ...', .F.)
+		Processa( {|| ExcluiSC5() } , 'Pedido de Venda', 'Excluindo os pedidos de venda ...', .F.)
 		Processa( {|| GeraSC5() }   , 'Pedido de Venda', 'Incluindo os pedidos de venda ...', .F.)
 				
 	Endif
@@ -131,6 +133,33 @@ EndDo
 FT_FUse()
 
 MsgInfo('Arquivo '+Alltrim(cNomeArq)+' importado.')
+
+Return Nil
+
+//-------------------------------------------------\\
+/*/{Protheus.doc} ExcluiSC4
+// Excluir as previsões de venda
+@type function
+@author Claudio Macedo
+@since 16/04/2026
+@version 1.0
+/*/
+//-------------------------------------------------\\
+Static Function ExcluiSC4()
+
+/* Excluindo as previsões de venda */
+SC4->(DbSetOrder(4)) 
+SC4->(DbSeek(xFilial('SC4') + mv_par01))
+
+Do While !SC4->(Eof()) .And. SC4->C4_FILIAL = xFilial('SC4') .And. SC4->C4_XCLIENT = mv_par01
+
+	SC4->(reclock('SC4',.F.))
+	SC4->(DbDelete())
+	SC4->(MsUnlock())
+
+	SC4->(DbSkip())
+	EndDo
+Endif
 
 Return Nil
 
@@ -217,6 +246,50 @@ Enddo
 (cAliasZZ6)->(DbCloseArea())
 
 Return Nil 
+
+//-------------------------------------------------\\
+/*/{Protheus.doc} ExcluiSC5
+// Excluir as previsões de venda
+@type function
+@author Claudio Macedo
+@since 16/04/2026
+@version 1.0
+/*/
+//-------------------------------------------------\\
+Static Function ExcluiSC5()
+
+Local cAliasSC5 := GetNextAlias()
+
+BeginSQL Alias cAliasSC5
+
+	SELECT C5_NUM
+	FROM %Table:SC5% SC5
+	WHERE C5_FILIAL = %xFilial:SC5%
+		AND C5_X_DT >= %Exp:dData%
+		AND C5_CLIENT = %Exp:mv_par01%
+		AND C5_NUM NOT IN (SELECT C9_PEDIDO FROM %Table:SC9% SC9 WHERE SC9.%notdel%)
+		AND C5_XTIPINC = '2'
+		AND SC5.%notdel%
+EndSQL
+
+(cAliasSC5)->(DbGoTop())
+
+/* Excluindo as previsões de venda */
+Do While !(cAliasSC5)->(Eof()) 
+	SC5->(DbSetOrder(1))
+
+	If SC5->(DbSeek(xFilial('SC5') + (cAliasSC5)->C5_NUM))
+		SC5->(reclock('SC5',.F.))
+		SC5->(DbDelete())
+		SC5->(MsUnlock())
+	Endif 
+
+	(cAliasSC5)->(DbSkip())
+EndDo
+
+(cAliasSC5)->(DbCloseArea)
+
+Return Nil
 
 //----------------------------------------------\\
 /*/{Protheus.doc} GeraSC5
