@@ -151,15 +151,14 @@ Static Function ExcluiSC4()
 SC4->(DbSetOrder(4)) 
 SC4->(DbSeek(xFilial('SC4') + mv_par01))
 
-Do While !SC4->(Eof()) .And. SC4->C4_FILIAL = xFilial('SC4') .And. SC4->C4_XCLIENT = mv_par01
+While !SC4->(Eof()) .And. SC4->C4_FILIAL = xFilial('SC4') .And. SC4->C4_XCLIENT = mv_par01
 
 	SC4->(reclock('SC4',.F.))
 	SC4->(DbDelete())
 	SC4->(MsUnlock())
 
 	SC4->(DbSkip())
-	EndDo
-Endif
+EndDo
 
 Return Nil
 
@@ -265,7 +264,6 @@ BeginSQL Alias cAliasSC5
 	SELECT C5_NUM
 	FROM %Table:SC5% SC5
 	WHERE C5_FILIAL = %xFilial:SC5%
-		AND C5_X_DT >= %Exp:dData%
 		AND C5_CLIENT = %Exp:mv_par01%
 		AND C5_NUM NOT IN (SELECT C9_PEDIDO FROM %Table:SC9% SC9 WHERE SC9.%notdel%)
 		AND C5_XTIPINC = '2'
@@ -274,15 +272,24 @@ EndSQL
 
 (cAliasSC5)->(DbGoTop())
 
-/* Excluindo as previsões de venda */
-Do While !(cAliasSC5)->(Eof()) 
+/* Excluindo os pedidos de venda */
+While !(cAliasSC5)->(Eof()) 
 	SC5->(DbSetOrder(1))
-
 	If SC5->(DbSeek(xFilial('SC5') + (cAliasSC5)->C5_NUM))
 		SC5->(reclock('SC5',.F.))
 		SC5->(DbDelete())
 		SC5->(MsUnlock())
 	Endif 
+
+	SC6->(DbSetOrder(1))
+	SC6->(DbSeek(xFilial('SC6') + (cAliasSC5)->C5_NUM))
+
+	While !SC6->(EOF()) .And. SC6->C6_FILIAL = xFilial('SC6') .And. SC6->C6_NUM = (cAliasSC5)->C5_NUM
+		SC6->(reclock('SC6',.F.))
+		SC6->(DbDelete())
+		SC6->(MsUnlock())
+		SC6->(DbSkip())
+	Enddo 
 
 	(cAliasSC5)->(DbSkip())
 EndDo

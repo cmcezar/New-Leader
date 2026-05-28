@@ -207,7 +207,7 @@ ZZ5->(MsUnlock())
 ZZ6->(DbSetOrder(1))
 ZZ6->(DbSeek(xFilial('ZZ6') + cID))
 
-While !ZZ6->(EOF()) .AND. ZZ6->ZZ6_ID = cID
+While !ZZ6->(EOF()) .AND. ZZ6->ZZ6_FILIAL = xFilial('ZZ6') .AND. ZZ6->ZZ6_ID = cID
 
 	ZZ6->(reclock('ZZ6',.F.))
 	ZZ6->(DbDelete())
@@ -266,7 +266,7 @@ Private lAutoErrNoFile := .F.
 SC5->(DbSetOrder(12))
 SC5->(DbSeek(xFilial('SC5') + cID))
 
-While !SC5->(EOF()) .AND. SC5->C5_XIDEDI = cID 
+While !SC5->(EOF()) .And. SC5->C5_FILIAL = xFilial('SC5') .AND. SC5->C5_XIDEDI = cID 
 
 	SC5->(reclock('SC5',.F.))
 	SC5->(DbDelete())
@@ -314,82 +314,3 @@ While !SC5->(EOF()) .AND. SC5->C5_XIDEDI = cID
 Enddo 
 
 Return Nil 
-
-/*
-===============================================================================================================================
-Programa--------: DelPedRel
-Autor-----------: desney.silva
-Data da Criacao-: 09/09/2016
-===============================================================================================================================
-Descrição-------: Funcao para excluir automaticamente o pedido relacionado ref.Operacao Triangular.
-===============================================================================================================================
-Parâmetros------: 
-_cFil - Filial do Pedido a ser excluido
-_cNumPed - Numero do Pedido a ser excluido
-===============================================================================================================================
-Retorno---------: 
-===============================================================================================================================
-Data da Modificação---: 
-Autor ----------------:
-Modificação ----------:
-===============================================================================================================================
-*/
-Static Function DelPedRel(_cFil,_cNumPed)
-
-	local cArea := GetArea()
-
-	local aCabec 	:= {}
-	local aItens 	:= {}
-	local nRecnoC5 	:= SC5->(Recno())
-	local nRecnoC6	:= SC6->(Recno())
-
-	local lRetDel	:= .T.
-
-	dbSelectArea("SC5")
-	SC5->(dbSetOrder(1))
-	If SC5->(dbSeek(_cFil+_cNumPed))
-
-		aAdd(aCabec,{"C5_NUM"   	,SC5->C5_NUM	,Nil })
-		aAdd(aCabec,{"C5_TIPO"		,SC5->C5_TIPO	,Nil })
-		aAdd(aCabec,{"C5_CLIENTE"	,SC5->C5_CLIENTE	,Nil })
-		aAdd(aCabec,{"C5_LOJACLI"	,SC5->C5_LOJACLI	,Nil })
-		aAdd(aCabec,{"C5_LOJAENT"	,SC5->C5_LOJAENT	,Nil })
-		aAdd(aCabec,{"C5_CONDPAG"	,SC5->C5_CONDPAG	,Nil })
-
-		dbSelectArea("SC6")
-		SC6->(dbSetOrder(1))
-		If SC6->(dbSeek(_cFil+_cNumPed))
-			While SC6->(!Eof()) .and. SC6->C6_FILIAL+SC6->C6_NUM == _cFil+_cNumPed
-
-				aAdd(aItens,{"C6_ITEM"		,SC6->C6_ITEM	,Nil })
-				aAdd(aItens,{"C6_PRODUTO"	,SC6->C6_PRODUTO,Nil })
-				aAdd(aItens,{"C6_QTDVEN"	,SC6->C6_QTDVEN	,Nil })
-				aAdd(aItens,{"C6_PRCVEN"	,SC6->C6_PRCVEN	,Nil })
-				aAdd(aItens,{"C6_PRUNIT"	,SC6->C6_PRUNIT	,Nil })
-				aAdd(aItens,{"C6_VALOR"		,SC6->C6_VALOR	,Nil })
-				aAdd(aItens,{"C6_TES"		,SC6->C6_TES	,Nil })
-
-				SC6->(dbSkip())
-			Enddo
-		Endif
-
-		lMsErroAuto	:= .F.
-		MATA410(aCabec,aItens,5)
-		If !lMsErroAuto
-			MsgInfo("Pedido Relacionado Operação Triangular " + _cNumPed + ' excluído com sucesso!',"MT410TOK()")
-		Else
-			MsgStop("Erro ao excluir Pedido Relacionado Operação Triangular " + _cNumPed + '. Informe ao Depto.TI.',"MT410TOK()")
-			Mostraerro()
-			lRetDel := .F.
-		Endif
-	Else
-		MsgStop("Pedido relacionado: " + _cNumPed + 'não localizado. Informe ao Depto.TI')
-		lRetDel := .F.
-	Endif
-
-	SC6->(dbGoTo(nRecnoC6))
-	SC5->(dbGoTo(nRecnoC5))
-
-	RestArea(cArea)
-
-Return lRetDel
