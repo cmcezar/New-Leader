@@ -294,7 +294,7 @@ While !(cAliasSC5)->(Eof())
 	(cAliasSC5)->(DbSkip())
 EndDo
 
-(cAliasSC5)->(DbCloseArea)
+(cAliasSC5)->(DbCloseArea())
 
 Return Nil
 
@@ -399,7 +399,7 @@ While !(cAliasZZ6)->(EOF())
 	AAdd(aItem, {"C6_ITEM"   , '01', Nil})
 	AAdd(aItem, {"C6_PRODUTO", (cAliasZZ6)->ZZ6_PNNWL , Nil})
 	AAdd(aItem, {"C6_QTDVEN" , (cAliasZZ6)->ZZ6_QTDENT, Nil})
-	AAdd(aItem, {"C6_PRCVEN" , (cAliasZZ6)->ZZ6_PRCUNI, Nil})
+	//AAdd(aItem, {"C6_PRCVEN" , (cAliasZZ6)->ZZ6_PRCUNI, Nil})
 	AAdd(aItem, {"C6_NUMPCOM", (cAliasZZ6)->ZZ6_ORDCOM, Nil})
 	AAdd(aItem, {"C6_ITEMPC" , (cAliasZZ6)->ZZ6_ITCOM , Nil})
 	AAdd(aItem, {"C6_TES"    , cTES, Nil})
