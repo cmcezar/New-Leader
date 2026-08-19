@@ -292,7 +292,8 @@ User Function CABECPC(nPagAtu,nPag)
 	//oPrint:SayBitmap(Li,HMARGEM+50,cLogo,150,150)
 	
 	///Imprime titulo
-	oPrint:Say(Li+150,HMARGEM + ((nColMax/2)-200), "Orçamento N°:" + SCJ->CJ_NUM , oFont13T,,,,)
+	oPrint:Say(Li+150,HMARGEM + ((nColMax/2)-200), "Orçamento N°: " + SCJ->CJ_NUM , oFont13T,,,,)
+	oPrint:Say(Li+150,HMARGEM + ((nColMax/2)+1130), "Data: " + Dtoc(SCJ->CJ_EMISSAO) , oFont13T,,,,)
 
 	///Espaço para Separação
 	Li    += 210
@@ -568,8 +569,11 @@ User Function IMPTOTPC(nPagAtu,nPag)
 	
 	///Textos:
 		///                  Posição               |             Informações
-		oPrint:Say(li,HMARGEM + (nColMax/2)+110    ,"Qtde Total: "  + AllTrim(Str(TRB1->QTDE )),oFont10G,,,,)///Qtde Total  == TRB1->QTDE
-		oPrint:Say(li,HMARGEM + ((nColMax/4)*3)-070,"Total Geral: " + AllTrim(Str(TRB1->TOTAL)),oFont10G,,,,)///Total Geral == TRB1->TOTAL 
+//		oPrint:Say(li,HMARGEM + (nColMax/2)+110    ,"Qtde Total: "  + AllTrim(Str(TRB1->QTDE )),oFont10G,,,,)///Qtde Total  == TRB1->QTDE
+//		oPrint:Say(li,HMARGEM + ((nColMax/4)*3)-070,"Total Geral: " + AllTrim(Str(TRB1->TOTAL)),oFont10G,,,,)///Total Geral == TRB1->TOTAL 
+
+		oPrint:Say(li,HMARGEM + (nColMax/2)+110    ,"Qtde Total: "  + Alltrim(Transform(TRB1->QTDE , PesqPict("SCK","CK_QTDVEN" ))),oFont10G,,,,) 
+		oPrint:Say(li,HMARGEM + ((nColMax/4)*3)-070,"Total Geral: R$ " + Alltrim(Transform(TRB1->TOTAL, PesqPict("SCK","CK_VALOR" ))),oFont10G,,,,) 
 
 	///Espaço para Separação
 	Li    += 020
