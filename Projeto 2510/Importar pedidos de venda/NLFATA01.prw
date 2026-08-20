@@ -30,6 +30,17 @@ If !Pergunte(cPerg, .T.)
     Return Nil
 Endif
 
+cCliente := mv_par01
+
+/* Localiza a loja do cliente */
+SA1->(DbSetOrder(14))
+If SA1->(DbSeek(xFilial('SA1') + Alltrim(mv_par02)))
+	cLoja := SA1->A1_LOJA
+Else
+	Alert('Planta ' + Alltrim(mv_par02) + ' não localizada !')
+	Return Nil
+Endif 
+
 nPos :=	Aviso('Importação de Previsão e Pedido de Venda','Esta rotina tem como objetivo importar'+CRLF+' previsões e pedidos de venda.',{'Importar','Sair'}, 3)
 
 If nPos = 1                 
@@ -89,7 +100,8 @@ If !FT_FEOF()
 	ZZ5->ZZ5_ID		 := cID
 	ZZ5->ZZ5_NOMARQ  := cNomeArq
 	ZZ5->ZZ5_DATA	 := dDatabase
-	ZZ5->ZZ5_CLIENT  := mv_par01
+	ZZ5->ZZ5_CLIENT  := cCliente
+	ZZ5->ZZ5_LOJA    := cLoja
 	ZZ5->(MsUnlock())
 	ConfirmSX8()
 Endif 
@@ -99,14 +111,20 @@ While !FT_FEOF()
 	//cString := FT_FReadln()
 	aString := StrTokArr(FT_FReadln(),';')
 
-	cCliente := ''
-	cLoja    := ''
-
-	SA1->(DbSetOrder(14))
-	If SA1->(DbSeek(xFilial('SA1') + Alltrim(aString[3])))
-		cCliente := SA1->A1_COD
-		cLoja    := SA1->A1_LOJA
+	/* Valida a planta */
+	If Alltrim(aString[3]) <> Alltrim(mv_par02)
+		FT_FSkip()
+		Loop
 	Endif 
+
+//	cCliente := ''
+//	cLoja    := ''
+
+//	SA1->(DbSetOrder(14))
+//	If SA1->(DbSeek(xFilial('SA1') + Alltrim(aString[3])))
+//		cCliente := SA1->A1_COD
+//		cLoja    := SA1->A1_LOJA
+//	Endif 
 
 	ZZ6->(reclock('ZZ6',.T.))
 	ZZ6->ZZ6_FILIAL := xFilial('ZZ6')
@@ -158,9 +176,9 @@ Static Function ExcluiSC4()
 
 /* Excluindo as previsões de venda */
 SC4->(DbSetOrder(4)) 
-SC4->(DbSeek(xFilial('SC4') + mv_par01))
+SC4->(DbSeek(xFilial('SC4') + cCliente + cLoja))
 
-While !SC4->(Eof()) .And. SC4->C4_FILIAL = xFilial('SC4') .And. SC4->C4_XCLIENT = mv_par01
+While !SC4->(Eof()) .And. SC4->C4_FILIAL = xFilial('SC4') .And. SC4->C4_XCLIENT = cCliente .And. SC4->C4_XLOJA = cLoja
 
 	SC4->(reclock('SC4',.F.))
 	SC4->(DbDelete())
@@ -216,14 +234,14 @@ EndSQL
 
 While !(cAliasZZ6)->(EOF())
 
-	cCliente := ''
-	cLoja    := ''
+//	cCliente := ''
+//	cLoja    := ''
 
-	SA1->(DbSetOrder(14))
-	If SA1->(DbSeek(xFilial('SA1') + (cAliasZZ6)->ZZ6_PLANTA))
-		cCliente := SA1->A1_COD
-		cLoja    := SA1->A1_LOJA
-	Endif 
+//	SA1->(DbSetOrder(14))
+//	If SA1->(DbSeek(xFilial('SA1') + (cAliasZZ6)->ZZ6_PLANTA))
+//		cCliente := SA1->A1_COD
+//		cLoja    := SA1->A1_LOJA
+//	Endif 
 
 	aadd(aDados,{'C4_XTIPINC', '2' , Nil})  
 	aadd(aDados,{'C4_PRODUTO', (cAliasZZ6)->ZZ6_PNNWL , Nil})  
@@ -273,7 +291,8 @@ BeginSQL Alias cAliasSC5
 	SELECT C5_NUM
 	FROM %Table:SC5% SC5
 	WHERE C5_FILIAL = %xFilial:SC5%
-		AND C5_CLIENT = %Exp:mv_par01%
+		AND C5_CLIENT  = %Exp:cCliente%
+		AND C5_LOJACLI = %Exp:cLoja%
 		AND C5_NUM NOT IN (SELECT C9_PEDIDO FROM %Table:SC9% SC9 WHERE SC9.%notdel%)
 		AND C5_XTIPINC = '2'
 		AND SC5.%notdel%
@@ -380,14 +399,14 @@ EndSQL
 
 While !(cAliasZZ6)->(EOF())
 
-	cCliente := ''
-	cLoja    := ''
+//	cCliente := ''
+//	cLoja    := ''
 
-	SA1->(DbSetOrder(14))
-	If SA1->(DbSeek(xFilial('SA1') + (cAliasZZ6)->ZZ6_PLANTA))
-		cCliente := SA1->A1_COD
-		cLoja    := SA1->A1_LOJA
-	Endif 
+//	SA1->(DbSetOrder(14))
+//	If SA1->(DbSeek(xFilial('SA1') + (cAliasZZ6)->ZZ6_PLANTA))
+//		cCliente := SA1->A1_COD
+//		cLoja    := SA1->A1_LOJA
+//	Endif 
 
 	cTES := Posicione('SA7',1,xFilial('SA7') + cCliente + cLoja + (cAliasZZ6)->ZZ6_PNNWL, 'A7_XTESPV') // Amarração Produto x Cliente
 
