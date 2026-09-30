@@ -237,8 +237,8 @@ User Function CABECPC(nPagAtu,nPag)
 
 	///Procura os dados do Cliente
 	SA1->(DbSetOrder(1))
-	if !SA1->(DbSeek(xFilial("SA1") + SCJ->CJ_CLIENTE  ))
-		MsgAlert("Dados do Cliente não encontrados." + CRLF + "Favor verifique o cadastro do cliente " + SCJ->CJ_CLIENTE + " .","Atenção.")
+	if !SA1->(DbSeek(xFilial("SA1") + cCliente + cLoja  ))
+		MsgAlert("Dados do Cliente não encontrados." + CRLF + "Favor verifique o cadastro do cliente " + cCliente + "/" + cLoja + " .","Atenção.")
 		Return()
 	Endif
 
@@ -317,7 +317,7 @@ User Function CABECPC(nPagAtu,nPag)
 		
 		///Textos:
 			///                  Posição               |             Informações
-			oPrint:Say(li,HMARGEM                      ," Cliente: "  + cCliente + " " + cLoja,oFont10G,,,,)///Cliente  == CJ_CLIENTE + CJ_LOJA 
+			oPrint:Say(li,HMARGEM                      ," Cliente: "  + cCliente + "/" + cLoja,oFont10G,,,,)///Cliente  == CJ_CLIENTE + CJ_LOJA 
 			oPrint:Say(li,HMARGEM + (nColMax/2)-130    ," Contato: "  + cContato              ,oFont10G,,,,)///Contato  == A1_CONTATO
 			oPrint:Say(li,HMARGEM + ((nColMax/4)*3)-250," Telefone: " + cTelefone             ,oFont10G,,,,)///Telefone == A1_TEL
 
